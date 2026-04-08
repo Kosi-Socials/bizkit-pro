@@ -1,0 +1,539 @@
+import { useState, useEffect } from "react";
+
+const TABS = ["Dashboard", "Content Planner", "Finance Tracker", "Brand Hub"];
+
+const PLATFORMS = ["Instagram", "TikTok", "LinkedIn", "Facebook", "Twitter/X"];
+const CONTENT_TYPES = ["Reel", "Carousel", "Static Post", "Story", "Video", "Blog", "Other"];
+const STATUS_OPTIONS = ["Idea", "In Progress", "Scheduled", "Posted"];
+const CATEGORIES = ["Income", "Expense"];
+const EXPENSE_CATS = ["Marketing", "Tools/Software", "Supplies", "Freelance/Staff", "Ads", "Other"];
+const INCOME_CATS = ["Product Sale", "Service", "Consultation", "Affiliate", "Other"];
+
+const STATUS_COLORS = {
+  "Idea": "#94a3b8",
+  "In Progress": "#f59e0b",
+  "Scheduled": "#6366f1",
+  "Posted": "#10b981"
+};
+
+const MONTHS = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+
+function formatCurrency(n) {
+  return "$" + Number(n || 0).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+}
+
+function getCurrentMonth() {
+  return new Date().toISOString().slice(0, 7);
+}
+
+const defaultContent = [
+  { id: 1, date: "2026-04-07", platform: "Instagram", type: "Reel", caption: "3 things I wish I knew before starting my business 👇", hashtags: "#smallbusiness #entrepreneur", status: "Idea", notes: "" },
+  { id: 2, date: "2026-04-09", platform: "TikTok", type: "Video", caption: "A day in my life as a small business owner", hashtags: "#dayinmylife #smallbiz", status: "In Progress", notes: "Film morning routine" },
+  { id: 3, date: "2026-04-11", platform: "LinkedIn", type: "Carousel", caption: "5 mistakes that cost me clients (and how to fix them)", hashtags: "#business #growth", status: "Scheduled", notes: "" },
+];
+
+const defaultFinance = [
+  { id: 1, date: "2026-04-01", type: "Income", category: "Service", description: "Social media management - Client A", amount: 500, month: "2026-04" },
+  { id: 2, date: "2026-04-02", type: "Expense", category: "Tools/Software", description: "Canva Pro subscription", amount: 13, month: "2026-04" },
+  { id: 3, date: "2026-04-03", type: "Income", category: "Product Sale", description: "Digital tracker bundle sale", amount: 67, month: "2026-04" },
+  { id: 4, date: "2026-04-04", type: "Expense", category: "Ads", description: "Instagram paid promotion", amount: 50, month: "2026-04" },
+];
+
+const defaultBrand = {
+  businessName: "My Small Business",
+  tagline: "Helping people every day",
+  audience: "Small business owners aged 25–45 who want to grow online",
+  voice: "Friendly, professional, relatable",
+  colors: "#6366f1, #10b981, #f59e0b",
+  fonts: "Headings: Bold sans-serif | Body: Clean readable",
+  mission: "To help small businesses thrive without the overwhelm",
+  goals: "1K followers by June\n5 product sales per week\n$2,000/month passive income",
+};
+
+export default function App() {
+  const [activeTab, setActiveTab] = useState("Dashboard");
+  const [content, setContent] = useState(defaultContent);
+  const [finance, setFinance] = useState(defaultFinance);
+  const [brand, setBrand] = useState(defaultBrand);
+  const [showContentForm, setShowContentForm] = useState(false);
+  const [showFinanceForm, setShowFinanceForm] = useState(false);
+  const [filterMonth, setFilterMonth] = useState(getCurrentMonth());
+  const [filterStatus, setFilterStatus] = useState("All");
+  const [filterPlatform, setFilterPlatform] = useState("All");
+  const [newContent, setNewContent] = useState({ date: "", platform: "Instagram", type: "Reel", caption: "", hashtags: "", status: "Idea", notes: "" });
+  const [newFinance, setNewFinance] = useState({ date: "", type: "Income", category: "Product Sale", description: "", amount: "" });
+  const [editBrand, setEditBrand] = useState(false);
+  const [brandDraft, setBrandDraft] = useState(brand);
+
+  const totalIncome = finance.filter(f => f.type === "Income").reduce((a, b) => a + Number(b.amount), 0);
+  const totalExpenses = finance.filter(f => f.type === "Expense").reduce((a, b) => a + Number(b.amount), 0);
+  const netProfit = totalIncome - totalExpenses;
+  const postedCount = content.filter(c => c.status === "Posted").length;
+  const scheduledCount = content.filter(c => c.status === "Scheduled").length;
+  const ideasCount = content.filter(c => c.status === "Idea").length;
+
+  const filteredContent = content.filter(c => {
+    const monthMatch = !filterMonth || c.date.startsWith(filterMonth);
+    const statusMatch = filterStatus === "All" || c.status === filterStatus;
+    const platformMatch = filterPlatform === "All" || c.platform === filterPlatform;
+    return monthMatch && statusMatch && platformMatch;
+  });
+
+  const filteredFinance = finance.filter(f => !filterMonth || f.date.startsWith(filterMonth));
+
+  function addContent() {
+    if (!newContent.date || !newContent.caption) return;
+    setContent([...content, { ...newContent, id: Date.now() }]);
+    setNewContent({ date: "", platform: "Instagram", type: "Reel", caption: "", hashtags: "", status: "Idea", notes: "" });
+    setShowContentForm(false);
+  }
+
+  function deleteContent(id) { setContent(content.filter(c => c.id !== id)); }
+  function updateContentStatus(id, status) { setContent(content.map(c => c.id === id ? { ...c, status } : c)); }
+
+  function addFinance() {
+    if (!newFinance.date || !newFinance.description || !newFinance.amount) return;
+    setFinance([...finance, { ...newFinance, id: Date.now(), month: newFinance.date.slice(0, 7), amount: Number(newFinance.amount) }]);
+    setNewFinance({ date: "", type: "Income", category: "Product Sale", description: "", amount: "" });
+    setShowFinanceForm(false);
+  }
+
+  function deleteFinance(id) { setFinance(finance.filter(f => f.id !== id)); }
+
+  function saveBrand() { setBrand(brandDraft); setEditBrand(false); }
+
+  const monthlyIncome = {};
+  const monthlyExpense = {};
+  finance.forEach(f => {
+    const m = f.date.slice(0, 7);
+    if (f.type === "Income") monthlyIncome[m] = (monthlyIncome[m] || 0) + Number(f.amount);
+    else monthlyExpense[m] = (monthlyExpense[m] || 0) + Number(f.amount);
+  });
+
+  return (
+    <div style={{ minHeight: "100vh", background: "#0f0f13", fontFamily: "'DM Sans', 'Segoe UI', sans-serif", color: "#e8e6f0" }}>
+      <style>{`
+        @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&family=Syne:wght@700;800&display=swap');
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        ::-webkit-scrollbar { width: 4px; } ::-webkit-scrollbar-track { background: #1a1a24; } ::-webkit-scrollbar-thumb { background: #6366f1; border-radius: 4px; }
+        input, select, textarea { background: #1e1e2e; border: 1px solid #2e2e42; color: #e8e6f0; border-radius: 10px; padding: 10px 14px; font-family: inherit; font-size: 14px; width: 100%; outline: none; transition: border 0.2s; }
+        input:focus, select:focus, textarea:focus { border-color: #6366f1; }
+        textarea { resize: vertical; min-height: 80px; }
+        select option { background: #1e1e2e; }
+        .btn { padding: 10px 20px; border-radius: 10px; border: none; cursor: pointer; font-family: inherit; font-weight: 600; font-size: 14px; transition: all 0.2s; }
+        .btn-primary { background: linear-gradient(135deg, #6366f1, #8b5cf6); color: white; }
+        .btn-primary:hover { transform: translateY(-1px); box-shadow: 0 4px 20px rgba(99,102,241,0.4); }
+        .btn-success { background: linear-gradient(135deg, #10b981, #059669); color: white; }
+        .btn-danger { background: #ef4444; color: white; padding: 6px 12px; font-size: 12px; }
+        .btn-ghost { background: transparent; border: 1px solid #2e2e42; color: #94a3b8; }
+        .btn-ghost:hover { border-color: #6366f1; color: #6366f1; }
+        .card { background: #16161f; border: 1px solid #23232f; border-radius: 16px; padding: 24px; }
+        .badge { display: inline-block; padding: 3px 10px; border-radius: 20px; font-size: 11px; font-weight: 600; letter-spacing: 0.5px; }
+        .tag { background: #1e1e2e; border: 1px solid #2e2e42; padding: 2px 8px; border-radius: 6px; font-size: 11px; color: #94a3b8; }
+        .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+        .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; }
+        .grid-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; }
+        @media (max-width: 700px) { .grid-2, .grid-3, .grid-4 { grid-template-columns: 1fr; } }
+        .tab-active { background: linear-gradient(135deg, #6366f1, #8b5cf6); color: white; }
+        .section-title { font-family: 'Syne', sans-serif; font-size: 22px; font-weight: 800; margin-bottom: 20px; }
+        .label { font-size: 12px; font-weight: 600; color: #6366f1; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 6px; display: block; }
+        .content-row { background: #16161f; border: 1px solid #23232f; border-radius: 12px; padding: 16px; margin-bottom: 10px; }
+        .content-row:hover { border-color: #6366f1; }
+        .finance-row { display: grid; grid-template-columns: 90px 1fr 100px 80px 90px; gap: 12px; align-items: center; padding: 12px 16px; background: #16161f; border: 1px solid #23232f; border-radius: 10px; margin-bottom: 8px; font-size: 14px; }
+        @media (max-width: 700px) { .finance-row { grid-template-columns: 1fr; } }
+        .profit-positive { color: #10b981; } .profit-negative { color: #ef4444; }
+        .form-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.7); display: flex; align-items: center; justify-content: center; z-index: 100; padding: 20px; }
+        .form-modal { background: #16161f; border: 1px solid #2e2e42; border-radius: 20px; padding: 28px; width: 100%; max-width: 540px; max-height: 90vh; overflow-y: auto; }
+        .stat-card { background: #16161f; border: 1px solid #23232f; border-radius: 16px; padding: 20px; }
+        .stat-value { font-family: 'Syne', sans-serif; font-size: 28px; font-weight: 800; }
+        .stat-label { font-size: 12px; color: #64748b; margin-top: 4px; }
+        .progress-bar { height: 6px; background: #23232f; border-radius: 3px; overflow: hidden; margin-top: 8px; }
+        .progress-fill { height: 100%; border-radius: 3px; background: linear-gradient(90deg, #6366f1, #8b5cf6); }
+      `}</style>
+
+      {/* Header */}
+      <div style={{ background: "#0d0d12", borderBottom: "1px solid #1e1e2e", padding: "0 24px" }}>
+        <div style={{ maxWidth: 1100, margin: "0 auto", display: "flex", alignItems: "center", justifyContent: "space-between", height: 64 }}>
+          <div>
+            <span style={{ fontFamily: "'Syne', sans-serif", fontWeight: 800, fontSize: 20, background: "linear-gradient(135deg, #6366f1, #10b981)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>BizKit</span>
+            <span style={{ fontSize: 12, color: "#64748b", marginLeft: 8 }}>Small Business OS</span>
+          </div>
+          <div style={{ fontSize: 13, color: "#64748b" }}>{brand.businessName}</div>
+        </div>
+      </div>
+
+      {/* Tabs */}
+      <div style={{ background: "#0d0d12", borderBottom: "1px solid #1e1e2e", padding: "0 24px" }}>
+        <div style={{ maxWidth: 1100, margin: "0 auto", display: "flex", gap: 4, overflowX: "auto" }}>
+          {TABS.map(tab => (
+            <button key={tab} className={`btn ${activeTab === tab ? "tab-active" : "btn-ghost"}`} style={{ borderRadius: "0 0 10px 10px", border: "none", fontSize: 13, padding: "10px 18px", whiteSpace: "nowrap" }} onClick={() => setActiveTab(tab)}>{tab}</button>
+          ))}
+        </div>
+      </div>
+
+      <div style={{ maxWidth: 1100, margin: "0 auto", padding: "28px 24px" }}>
+
+        {/* ====== DASHBOARD ====== */}
+        {activeTab === "Dashboard" && (
+          <div>
+            <div style={{ marginBottom: 28 }}>
+              <div style={{ fontFamily: "'Syne', sans-serif", fontSize: 28, fontWeight: 800, marginBottom: 4 }}>Welcome back 👋</div>
+              <div style={{ color: "#64748b", fontSize: 14 }}>Here's your business at a glance</div>
+            </div>
+
+            <div className="grid-4" style={{ marginBottom: 24 }}>
+              <div className="stat-card">
+                <div style={{ fontSize: 11, color: "#10b981", fontWeight: 700, marginBottom: 8, textTransform: "uppercase", letterSpacing: 1 }}>💰 Total Income</div>
+                <div className="stat-value" style={{ color: "#10b981" }}>{formatCurrency(totalIncome)}</div>
+                <div className="stat-label">All time</div>
+              </div>
+              <div className="stat-card">
+                <div style={{ fontSize: 11, color: "#ef4444", fontWeight: 700, marginBottom: 8, textTransform: "uppercase", letterSpacing: 1 }}>💸 Total Expenses</div>
+                <div className="stat-value" style={{ color: "#ef4444" }}>{formatCurrency(totalExpenses)}</div>
+                <div className="stat-label">All time</div>
+              </div>
+              <div className="stat-card">
+                <div style={{ fontSize: 11, color: "#6366f1", fontWeight: 700, marginBottom: 8, textTransform: "uppercase", letterSpacing: 1 }}>📈 Net Profit</div>
+                <div className={`stat-value ${netProfit >= 0 ? "profit-positive" : "profit-negative"}`}>{formatCurrency(netProfit)}</div>
+                <div className="stat-label">Income - Expenses</div>
+              </div>
+              <div className="stat-card">
+                <div style={{ fontSize: 11, color: "#f59e0b", fontWeight: 700, marginBottom: 8, textTransform: "uppercase", letterSpacing: 1 }}>📅 Content Posts</div>
+                <div className="stat-value" style={{ color: "#f59e0b" }}>{content.length}</div>
+                <div className="stat-label">{postedCount} posted · {scheduledCount} scheduled</div>
+              </div>
+            </div>
+
+            <div className="grid-2" style={{ marginBottom: 24 }}>
+              <div className="card">
+                <div style={{ fontFamily: "'Syne', sans-serif", fontWeight: 800, marginBottom: 16, fontSize: 16 }}>📊 Content Status</div>
+                {STATUS_OPTIONS.map(s => {
+                  const count = content.filter(c => c.status === s).length;
+                  const pct = content.length ? Math.round((count / content.length) * 100) : 0;
+                  return (
+                    <div key={s} style={{ marginBottom: 14 }}>
+                      <div style={{ display: "flex", justifyContent: "space-between", fontSize: 13, marginBottom: 4 }}>
+                        <span style={{ color: STATUS_COLORS[s], fontWeight: 600 }}>{s}</span>
+                        <span style={{ color: "#64748b" }}>{count} posts ({pct}%)</span>
+                      </div>
+                      <div className="progress-bar">
+                        <div className="progress-fill" style={{ width: pct + "%", background: STATUS_COLORS[s] }} />
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+
+              <div className="card">
+                <div style={{ fontFamily: "'Syne', sans-serif", fontWeight: 800, marginBottom: 16, fontSize: 16 }}>🎯 Platform Breakdown</div>
+                {PLATFORMS.map(p => {
+                  const count = content.filter(c => c.platform === p).length;
+                  if (!count) return null;
+                  const pct = Math.round((count / content.length) * 100);
+                  return (
+                    <div key={p} style={{ marginBottom: 14 }}>
+                      <div style={{ display: "flex", justifyContent: "space-between", fontSize: 13, marginBottom: 4 }}>
+                        <span style={{ fontWeight: 600 }}>{p}</span>
+                        <span style={{ color: "#64748b" }}>{count} posts</span>
+                      </div>
+                      <div className="progress-bar">
+                        <div className="progress-fill" style={{ width: pct + "%" }} />
+                      </div>
+                    </div>
+                  );
+                })}
+                {content.length === 0 && <div style={{ color: "#64748b", fontSize: 13 }}>No content yet. Add your first post!</div>}
+              </div>
+            </div>
+
+            <div className="card">
+              <div style={{ fontFamily: "'Syne', sans-serif", fontWeight: 800, marginBottom: 16, fontSize: 16 }}>📅 Upcoming Content</div>
+              {content.filter(c => c.status !== "Posted").slice(0, 4).map(c => (
+                <div key={c.id} style={{ display: "flex", alignItems: "center", gap: 12, padding: "12px 0", borderBottom: "1px solid #1e1e2e" }}>
+                  <div style={{ minWidth: 80, fontSize: 12, color: "#64748b" }}>{c.date}</div>
+                  <span className="tag">{c.platform}</span>
+                  <span className="tag">{c.type}</span>
+                  <div style={{ flex: 1, fontSize: 13, color: "#e8e6f0", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{c.caption}</div>
+                  <span className="badge" style={{ background: STATUS_COLORS[c.status] + "22", color: STATUS_COLORS[c.status] }}>{c.status}</span>
+                </div>
+              ))}
+              {content.filter(c => c.status !== "Posted").length === 0 && <div style={{ color: "#64748b", fontSize: 13 }}>No upcoming content. Plan your next post!</div>}
+            </div>
+          </div>
+        )}
+
+        {/* ====== CONTENT PLANNER ====== */}
+        {activeTab === "Content Planner" && (
+          <div>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 24, flexWrap: "wrap", gap: 12 }}>
+              <div className="section-title" style={{ marginBottom: 0 }}>📅 Content Planner</div>
+              <button className="btn btn-primary" onClick={() => setShowContentForm(true)}>+ Add Post</button>
+            </div>
+
+            {/* Filters */}
+            <div style={{ display: "flex", gap: 12, marginBottom: 20, flexWrap: "wrap" }}>
+              <input type="month" value={filterMonth} onChange={e => setFilterMonth(e.target.value)} style={{ width: "auto", minWidth: 160 }} />
+              <select value={filterStatus} onChange={e => setFilterStatus(e.target.value)} style={{ width: "auto", minWidth: 140 }}>
+                <option>All</option>
+                {STATUS_OPTIONS.map(s => <option key={s}>{s}</option>)}
+              </select>
+              <select value={filterPlatform} onChange={e => setFilterPlatform(e.target.value)} style={{ width: "auto", minWidth: 140 }}>
+                <option>All</option>
+                {PLATFORMS.map(p => <option key={p}>{p}</option>)}
+              </select>
+            </div>
+
+            {/* Caption Prompt Ideas */}
+            <div className="card" style={{ marginBottom: 20, background: "linear-gradient(135deg, #1e1b4b, #1a1a2e)", border: "1px solid #4338ca" }}>
+              <div style={{ fontSize: 13, fontWeight: 700, color: "#818cf8", marginBottom: 10 }}>💡 Caption Prompt Ideas for Small Businesses</div>
+              <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
+                {["Behind the scenes of my process", "3 mistakes I made so you don't have to", "This is what [your service] actually looks like", "Client result spotlight", "My morning routine as a business owner", "Answer a common customer question", "Before & after", "A day in the life"].map(p => (
+                  <span key={p} className="tag" style={{ cursor: "pointer", fontSize: 12 }}>{p}</span>
+                ))}
+              </div>
+            </div>
+
+            {filteredContent.length === 0 && (
+              <div style={{ textAlign: "center", color: "#64748b", padding: "48px 0" }}>No posts found. Add your first content!</div>
+            )}
+
+            {filteredContent.map(c => (
+              <div key={c.id} className="content-row">
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", flexWrap: "wrap", gap: 8 }}>
+                  <div style={{ display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center" }}>
+                    <span style={{ fontSize: 12, color: "#64748b", minWidth: 80 }}>{c.date}</span>
+                    <span className="tag">{c.platform}</span>
+                    <span className="tag">{c.type}</span>
+                    <select value={c.status} onChange={e => updateContentStatus(c.id, e.target.value)}
+                      style={{ width: "auto", minWidth: 120, fontSize: 12, padding: "4px 10px", color: STATUS_COLORS[c.status], background: STATUS_COLORS[c.status] + "15", border: `1px solid ${STATUS_COLORS[c.status]}44` }}>
+                      {STATUS_OPTIONS.map(s => <option key={s} style={{ color: "#e8e6f0", background: "#1e1e2e" }}>{s}</option>)}
+                    </select>
+                  </div>
+                  <button className="btn btn-danger" onClick={() => deleteContent(c.id)}>Delete</button>
+                </div>
+                <div style={{ marginTop: 12, fontSize: 14, color: "#e8e6f0", fontWeight: 500 }}>{c.caption}</div>
+                {c.hashtags && <div style={{ marginTop: 6, fontSize: 12, color: "#6366f1" }}>{c.hashtags}</div>}
+                {c.notes && <div style={{ marginTop: 6, fontSize: 12, color: "#64748b", fontStyle: "italic" }}>Note: {c.notes}</div>}
+              </div>
+            ))}
+
+            {showContentForm && (
+              <div className="form-overlay">
+                <div className="form-modal">
+                  <div style={{ fontFamily: "'Syne', sans-serif", fontWeight: 800, fontSize: 20, marginBottom: 20 }}>Add New Post</div>
+                  <div style={{ display: "grid", gap: 16 }}>
+                    <div><label className="label">Date</label><input type="date" value={newContent.date} onChange={e => setNewContent({ ...newContent, date: e.target.value })} /></div>
+                    <div className="grid-2">
+                      <div><label className="label">Platform</label>
+                        <select value={newContent.platform} onChange={e => setNewContent({ ...newContent, platform: e.target.value })}>
+                          {PLATFORMS.map(p => <option key={p}>{p}</option>)}
+                        </select>
+                      </div>
+                      <div><label className="label">Content Type</label>
+                        <select value={newContent.type} onChange={e => setNewContent({ ...newContent, type: e.target.value })}>
+                          {CONTENT_TYPES.map(t => <option key={t}>{t}</option>)}
+                        </select>
+                      </div>
+                    </div>
+                    <div><label className="label">Caption / Post Idea</label><textarea value={newContent.caption} onChange={e => setNewContent({ ...newContent, caption: e.target.value })} placeholder="Write your caption or post idea here..." /></div>
+                    <div><label className="label">Hashtags</label><input value={newContent.hashtags} onChange={e => setNewContent({ ...newContent, hashtags: e.target.value })} placeholder="#smallbusiness #entrepreneur" /></div>
+                    <div><label className="label">Status</label>
+                      <select value={newContent.status} onChange={e => setNewContent({ ...newContent, status: e.target.value })}>
+                        {STATUS_OPTIONS.map(s => <option key={s}>{s}</option>)}
+                      </select>
+                    </div>
+                    <div><label className="label">Notes</label><input value={newContent.notes} onChange={e => setNewContent({ ...newContent, notes: e.target.value })} placeholder="Any extra notes or reminders..." /></div>
+                    <div style={{ display: "flex", gap: 10, justifyContent: "flex-end" }}>
+                      <button className="btn btn-ghost" onClick={() => setShowContentForm(false)}>Cancel</button>
+                      <button className="btn btn-primary" onClick={addContent}>Add Post</button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* ====== FINANCE TRACKER ====== */}
+        {activeTab === "Finance Tracker" && (
+          <div>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 24, flexWrap: "wrap", gap: 12 }}>
+              <div className="section-title" style={{ marginBottom: 0 }}>💰 Finance Tracker</div>
+              <button className="btn btn-success" onClick={() => setShowFinanceForm(true)}>+ Add Transaction</button>
+            </div>
+
+            <div className="grid-3" style={{ marginBottom: 24 }}>
+              <div className="stat-card" style={{ border: "1px solid #10b98133" }}>
+                <div style={{ fontSize: 11, color: "#10b981", fontWeight: 700, marginBottom: 8, textTransform: "uppercase", letterSpacing: 1 }}>Total Income</div>
+                <div className="stat-value profit-positive">{formatCurrency(totalIncome)}</div>
+              </div>
+              <div className="stat-card" style={{ border: "1px solid #ef444433" }}>
+                <div style={{ fontSize: 11, color: "#ef4444", fontWeight: 700, marginBottom: 8, textTransform: "uppercase", letterSpacing: 1 }}>Total Expenses</div>
+                <div className="stat-value profit-negative">{formatCurrency(totalExpenses)}</div>
+              </div>
+              <div className="stat-card" style={{ border: `1px solid ${netProfit >= 0 ? "#10b981" : "#ef4444"}33` }}>
+                <div style={{ fontSize: 11, color: netProfit >= 0 ? "#10b981" : "#ef4444", fontWeight: 700, marginBottom: 8, textTransform: "uppercase", letterSpacing: 1 }}>Net Profit</div>
+                <div className={`stat-value ${netProfit >= 0 ? "profit-positive" : "profit-negative"}`}>{formatCurrency(netProfit)}</div>
+              </div>
+            </div>
+
+            <div style={{ marginBottom: 16 }}>
+              <input type="month" value={filterMonth} onChange={e => setFilterMonth(e.target.value)} style={{ width: "auto", minWidth: 160 }} />
+            </div>
+
+            {/* Finance table header */}
+            <div style={{ display: "grid", gridTemplateColumns: "90px 1fr 100px 80px 90px", gap: 12, padding: "8px 16px", fontSize: 11, color: "#6366f1", fontWeight: 700, textTransform: "uppercase", letterSpacing: 1, marginBottom: 8 }}>
+              <span>Date</span><span>Description</span><span>Category</span><span>Amount</span><span>Action</span>
+            </div>
+
+            {filteredFinance.length === 0 && <div style={{ textAlign: "center", color: "#64748b", padding: "32px 0" }}>No transactions for this month.</div>}
+
+            {filteredFinance.map(f => (
+              <div key={f.id} className="finance-row">
+                <span style={{ fontSize: 12, color: "#64748b" }}>{f.date}</span>
+                <div>
+                  <div style={{ fontSize: 13, fontWeight: 500 }}>{f.description}</div>
+                  <span className="tag" style={{ marginTop: 4, fontSize: 11 }}>{f.type}</span>
+                </div>
+                <span className="tag" style={{ fontSize: 11 }}>{f.category}</span>
+                <span style={{ fontWeight: 700, color: f.type === "Income" ? "#10b981" : "#ef4444", fontSize: 14 }}>
+                  {f.type === "Income" ? "+" : "-"}{formatCurrency(f.amount)}
+                </span>
+                <button className="btn btn-danger" onClick={() => deleteFinance(f.id)}>Delete</button>
+              </div>
+            ))}
+
+            {/* Income by category */}
+            <div className="grid-2" style={{ marginTop: 24 }}>
+              <div className="card">
+                <div style={{ fontFamily: "'Syne', sans-serif", fontWeight: 800, marginBottom: 14, fontSize: 15, color: "#10b981" }}>Income Sources</div>
+                {INCOME_CATS.map(cat => {
+                  const total = finance.filter(f => f.type === "Income" && f.category === cat).reduce((a, b) => a + b.amount, 0);
+                  if (!total) return null;
+                  return <div key={cat} style={{ display: "flex", justifyContent: "space-between", fontSize: 13, padding: "6px 0", borderBottom: "1px solid #1e1e2e" }}><span>{cat}</span><span style={{ color: "#10b981", fontWeight: 600 }}>{formatCurrency(total)}</span></div>;
+                })}
+              </div>
+              <div className="card">
+                <div style={{ fontFamily: "'Syne', sans-serif", fontWeight: 800, marginBottom: 14, fontSize: 15, color: "#ef4444" }}>Expense Breakdown</div>
+                {EXPENSE_CATS.map(cat => {
+                  const total = finance.filter(f => f.type === "Expense" && f.category === cat).reduce((a, b) => a + b.amount, 0);
+                  if (!total) return null;
+                  return <div key={cat} style={{ display: "flex", justifyContent: "space-between", fontSize: 13, padding: "6px 0", borderBottom: "1px solid #1e1e2e" }}><span>{cat}</span><span style={{ color: "#ef4444", fontWeight: 600 }}>{formatCurrency(total)}</span></div>;
+                })}
+              </div>
+            </div>
+
+            {showFinanceForm && (
+              <div className="form-overlay">
+                <div className="form-modal">
+                  <div style={{ fontFamily: "'Syne', sans-serif", fontWeight: 800, fontSize: 20, marginBottom: 20 }}>Add Transaction</div>
+                  <div style={{ display: "grid", gap: 16 }}>
+                    <div><label className="label">Date</label><input type="date" value={newFinance.date} onChange={e => setNewFinance({ ...newFinance, date: e.target.value })} /></div>
+                    <div className="grid-2">
+                      <div><label className="label">Type</label>
+                        <select value={newFinance.type} onChange={e => setNewFinance({ ...newFinance, type: e.target.value, category: e.target.value === "Income" ? "Product Sale" : "Marketing" })}>
+                          {CATEGORIES.map(c => <option key={c}>{c}</option>)}
+                        </select>
+                      </div>
+                      <div><label className="label">Category</label>
+                        <select value={newFinance.category} onChange={e => setNewFinance({ ...newFinance, category: e.target.value })}>
+                          {(newFinance.type === "Income" ? INCOME_CATS : EXPENSE_CATS).map(c => <option key={c}>{c}</option>)}
+                        </select>
+                      </div>
+                    </div>
+                    <div><label className="label">Description</label><input value={newFinance.description} onChange={e => setNewFinance({ ...newFinance, description: e.target.value })} placeholder="e.g. Digital product sale, Client payment..." /></div>
+                    <div><label className="label">Amount ($)</label><input type="number" value={newFinance.amount} onChange={e => setNewFinance({ ...newFinance, amount: e.target.value })} placeholder="0.00" min="0" step="0.01" /></div>
+                    <div style={{ display: "flex", gap: 10, justifyContent: "flex-end" }}>
+                      <button className="btn btn-ghost" onClick={() => setShowFinanceForm(false)}>Cancel</button>
+                      <button className="btn btn-success" onClick={addFinance}>Add Transaction</button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* ====== BRAND HUB ====== */}
+        {activeTab === "Brand Hub" && (
+          <div>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 24 }}>
+              <div className="section-title" style={{ marginBottom: 0 }}>🎨 Brand Hub</div>
+              {!editBrand
+                ? <button className="btn btn-primary" onClick={() => { setBrandDraft(brand); setEditBrand(true); }}>Edit Brand Info</button>
+                : <div style={{ display: "flex", gap: 10 }}>
+                    <button className="btn btn-ghost" onClick={() => setEditBrand(false)}>Cancel</button>
+                    <button className="btn btn-primary" onClick={saveBrand}>Save Changes</button>
+                  </div>
+              }
+            </div>
+
+            <div className="grid-2">
+              <div className="card">
+                <div style={{ fontFamily: "'Syne', sans-serif", fontWeight: 800, fontSize: 16, marginBottom: 20, color: "#6366f1" }}>🏢 Business Identity</div>
+                {!editBrand ? (
+                  <div style={{ display: "grid", gap: 16 }}>
+                    {[["Business Name", brand.businessName], ["Tagline", brand.tagline], ["Brand Voice", brand.voice], ["Brand Colors", brand.colors], ["Fonts", brand.fonts]].map(([l, v]) => (
+                      <div key={l}><div className="label">{l}</div><div style={{ fontSize: 14, color: "#e8e6f0" }}>{v}</div></div>
+                    ))}
+                  </div>
+                ) : (
+                  <div style={{ display: "grid", gap: 14 }}>
+                    {[["businessName", "Business Name", "text"], ["tagline", "Tagline", "text"], ["voice", "Brand Voice", "text"], ["colors", "Brand Colors (hex)", "text"], ["fonts", "Fonts", "text"]].map(([k, l, t]) => (
+                      <div key={k}><label className="label">{l}</label><input type={t} value={brandDraft[k]} onChange={e => setBrandDraft({ ...brandDraft, [k]: e.target.value })} /></div>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              <div style={{ display: "grid", gap: 16 }}>
+                <div className="card">
+                  <div style={{ fontFamily: "'Syne', sans-serif", fontWeight: 800, fontSize: 16, marginBottom: 16, color: "#10b981" }}>🎯 Target Audience</div>
+                  {!editBrand
+                    ? <div style={{ fontSize: 14, color: "#e8e6f0" }}>{brand.audience}</div>
+                    : <textarea value={brandDraft.audience} onChange={e => setBrandDraft({ ...brandDraft, audience: e.target.value })} />
+                  }
+                </div>
+                <div className="card">
+                  <div style={{ fontFamily: "'Syne', sans-serif", fontWeight: 800, fontSize: 16, marginBottom: 16, color: "#f59e0b" }}>🌟 Mission Statement</div>
+                  {!editBrand
+                    ? <div style={{ fontSize: 14, color: "#e8e6f0" }}>{brand.mission}</div>
+                    : <textarea value={brandDraft.mission} onChange={e => setBrandDraft({ ...brandDraft, mission: e.target.value })} />
+                  }
+                </div>
+                <div className="card">
+                  <div style={{ fontFamily: "'Syne', sans-serif", fontWeight: 800, fontSize: 16, marginBottom: 16, color: "#8b5cf6" }}>📌 Business Goals</div>
+                  {!editBrand
+                    ? <div style={{ fontSize: 14, color: "#e8e6f0", whiteSpace: "pre-line" }}>{brand.goals}</div>
+                    : <textarea value={brandDraft.goals} onChange={e => setBrandDraft({ ...brandDraft, goals: e.target.value })} placeholder="List your goals, one per line..." />
+                  }
+                </div>
+              </div>
+            </div>
+
+            {/* Content pillars */}
+            <div className="card" style={{ marginTop: 20 }}>
+              <div style={{ fontFamily: "'Syne', sans-serif", fontWeight: 800, fontSize: 16, marginBottom: 16 }}>📐 Content Pillars for Small Businesses</div>
+              <div className="grid-3">
+                {[
+                  { emoji: "🎓", title: "Educate", desc: "Tips, how-tos, industry insights. Builds trust and authority." },
+                  { emoji: "💬", title: "Relate", desc: "Your story, struggles, wins. Builds human connection." },
+                  { emoji: "🛍️", title: "Sell", desc: "Products, services, results, testimonials. Drives revenue." },
+                  { emoji: "🎉", title: "Entertain", desc: "Relatable content, trends, humor. Grows reach." },
+                  { emoji: "🤝", title: "Community", desc: "Q&As, polls, UGC. Builds loyal audience." },
+                  { emoji: "🔍", title: "Inspire", desc: "Motivational stories, transformations, big ideas." },
+                ].map(p => (
+                  <div key={p.title} style={{ background: "#1e1e2e", border: "1px solid #2e2e42", borderRadius: 12, padding: 16 }}>
+                    <div style={{ fontSize: 22, marginBottom: 6 }}>{p.emoji}</div>
+                    <div style={{ fontWeight: 700, fontSize: 14, marginBottom: 6 }}>{p.title}</div>
+                    <div style={{ fontSize: 12, color: "#64748b" }}>{p.desc}</div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
