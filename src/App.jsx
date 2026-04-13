@@ -1,999 +1,684 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
+import { createClient } from "@supabase/supabase-js";
 
-// ─── NICHE DATA ───────────────────────────────────────────────────────────────
+const SURL = "https://quyvmsqdfzuetzwzhase.supabase.co";
+const SKEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InF1eXZtc3FkZnp1ZXR6d3poYXNlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU4NTQ1NjUsImV4cCI6MjA5MTQzMDU2NX0.yBg9rXcBxBL2xnOnM_6YTtkpy3BcFZdP3dmYrU-3qvk";
+const sb = createClient(SURL, SKEY);
+const G = "#16a34a";
+
 const NICHES = [
-  {
-    id: "beauty",
-    label: "Beauty & Wellness",
-    icon: "✦",
-    color: "#c4a882",
-    accent: "#e8d5c0",
-    bg: "linear-gradient(135deg, #2a1f1a 0%, #1a1218 100%)",
-    cardBg: "#1e1614",
-    illustration: (
-      <svg viewBox="0 0 120 120" fill="none" xmlns="http://www.w3.org/2000/svg" style={{width:"100%",height:"100%"}}>
-        <circle cx="60" cy="45" r="28" stroke="#c4a882" strokeWidth="1.5" fill="none" opacity="0.6"/>
-        <circle cx="60" cy="45" r="18" fill="#c4a882" opacity="0.15"/>
-        <path d="M44 45 Q52 32 60 45 Q68 58 76 45" stroke="#c4a882" strokeWidth="1.5" fill="none"/>
-        <path d="M50 38 Q60 28 70 38" stroke="#e8d5c0" strokeWidth="1" fill="none" opacity="0.7"/>
-        <line x1="60" y1="73" x2="60" y2="95" stroke="#c4a882" strokeWidth="1.5" opacity="0.5"/>
-        <ellipse cx="60" cy="97" rx="12" ry="4" stroke="#c4a882" strokeWidth="1" fill="none" opacity="0.4"/>
-        <circle cx="38" cy="30" r="2" fill="#c4a882" opacity="0.4"/>
-        <circle cx="82" cy="30" r="2" fill="#c4a882" opacity="0.4"/>
-        <circle cx="30" cy="55" r="1.5" fill="#e8d5c0" opacity="0.5"/>
-        <circle cx="90" cy="55" r="1.5" fill="#e8d5c0" opacity="0.5"/>
-      </svg>
-    ),
-    expenseCategories: ["Products & Supplies", "Equipment", "Salon Rent", "Staff Wages", "Marketing", "Training & Courses", "Packaging", "Software"],
-    incomeCategories: ["Services", "Product Sales", "Gift Cards", "Consultations", "Online Courses", "Collaborations"],
-    contentIdeas: [
-      { type: "Reel", idea: "Before & after transformation reveal", pillar: "Showcase" },
-      { type: "Carousel", idea: "5 skincare mistakes your clients are making (and how to fix them)", pillar: "Educate" },
-      { type: "Story", idea: "Poll: Which treatment do you want to try first?", pillar: "Engage" },
-      { type: "Reel", idea: "Your morning salon setup routine — satisfying & aesthetic", pillar: "Behind the scenes" },
-      { type: "Static", idea: "Client testimonial quote card", pillar: "Social proof" },
-      { type: "Reel", idea: "Trending beauty hack — with your expert take on it", pillar: "Educate" },
-      { type: "Carousel", idea: "Your complete price list — beautifully designed", pillar: "Showcase" },
-      { type: "Reel", idea: "Day in the life of a beauty business owner", pillar: "Relate" },
-      { type: "Static", idea: "Seasonal treatment promotion", pillar: "Sell" },
-      { type: "Reel", idea: "Product unboxing — new stock just arrived", pillar: "Entertain" },
-      { type: "Carousel", idea: "How to maintain your [service] at home", pillar: "Educate" },
-      { type: "Story", idea: "Behind the scenes of preparing for a full day of bookings", pillar: "Behind the scenes" },
-    ],
-    captions: [
-      "Your skin deserves the best — and we're here to give it exactly that. Book your [service] today 🌿",
-      "Before she walked in, she felt [emotion]. When she walked out? [transformation]. This is why we do what we do ✨",
-      "Hot take: [beauty tip]. Do you agree? Drop a 🙋 below",
-      "We don't just do [service] — we make you feel like the best version of yourself. Here's proof 👇",
-    ],
-    pillars: [
-      { name: "Transform", desc: "Before/afters, client reveals, visual results that speak for themselves", emoji: "✨" },
-      { name: "Educate", desc: "Skincare tips, product knowledge, myths vs facts in beauty", emoji: "📚" },
-      { name: "Behind the scenes", desc: "Your process, your space, your passion — people love authenticity", emoji: "🎬" },
-      { name: "Social proof", desc: "Reviews, testimonials, client love that builds trust", emoji: "💬" },
-      { name: "Sell", desc: "Promotions, new services, booking CTAs done beautifully", emoji: "🛍️" },
-    ],
-  },
-  {
-    id: "tech",
-    label: "Tech & Software",
-    icon: "◈",
-    color: "#4ade80",
-    accent: "#86efac",
-    bg: "linear-gradient(135deg, #0a1a12 0%, #0d1117 100%)",
-    cardBg: "#0e1a14",
-    illustration: (
-      <svg viewBox="0 0 120 120" fill="none" xmlns="http://www.w3.org/2000/svg" style={{width:"100%",height:"100%"}}>
-        <rect x="20" y="25" width="80" height="55" rx="4" stroke="#4ade80" strokeWidth="1.5" fill="none" opacity="0.6"/>
-        <rect x="28" y="33" width="64" height="39" rx="2" fill="#4ade80" opacity="0.05"/>
-        <line x1="28" y1="42" x2="92" y2="42" stroke="#4ade80" strokeWidth="0.8" opacity="0.3"/>
-        <text x="32" y="57" fontFamily="monospace" fontSize="7" fill="#4ade80" opacity="0.8">const grow = () =&gt; {'{'}</text>
-        <text x="32" y="66" fontFamily="monospace" fontSize="7" fill="#86efac" opacity="0.6">  return success</text>
-        <text x="32" y="75" fontFamily="monospace" fontSize="7" fill="#4ade80" opacity="0.8">{'}'}</text>
-        <line x1="45" y1="80" x2="75" y2="80" stroke="#4ade80" strokeWidth="2" opacity="0.5"/>
-        <rect x="50" y="80" width="20" height="8" rx="1" fill="#4ade80" opacity="0.2"/>
-        <circle cx="95" cy="28" r="6" fill="#4ade80" opacity="0.2" stroke="#4ade80" strokeWidth="1"/>
-        <line x1="99" y1="32" x2="105" y2="38" stroke="#4ade80" strokeWidth="1.5" opacity="0.6"/>
-      </svg>
-    ),
-    expenseCategories: ["Hosting & Infrastructure", "Software Licenses", "Developer Tools", "Marketing & Ads", "Team / Contractors", "Legal & Compliance", "Equipment", "Events & Networking"],
-    incomeCategories: ["SaaS Subscriptions", "One-time Sales", "Consulting", "API Usage Fees", "Partnerships", "Grants & Funding"],
-    contentIdeas: [
-      { type: "Carousel", idea: "5 tools every small business needs in [year]", pillar: "Educate" },
-      { type: "Reel", idea: "Watch us build [feature] in real time — 60 second version", pillar: "Behind the scenes" },
-      { type: "Static", idea: "Customer success story — their results using your product", pillar: "Social proof" },
-      { type: "Carousel", idea: "We just launched [feature] — here's what it does and why it matters", pillar: "Announce" },
-      { type: "Reel", idea: "The problem we solve — told in under 30 seconds", pillar: "Sell" },
-      { type: "Carousel", idea: "Common misconceptions about [your tech niche]", pillar: "Educate" },
-      { type: "Static", idea: "Milestone post — X users, X customers, X revenue", pillar: "Relate" },
-      { type: "Reel", idea: "Our team's favourite productivity hacks", pillar: "Entertain" },
-      { type: "Carousel", idea: "Step-by-step: How to get started with [your product]", pillar: "Onboard" },
-      { type: "Static", idea: "Industry stat + your hot take on it", pillar: "Thought leadership" },
-      { type: "Reel", idea: "A bug we fixed — and what we learned", pillar: "Transparency" },
-      { type: "Carousel", idea: "What we're building next — community sneak peek", pillar: "Engage" },
-    ],
-    captions: [
-      "We built [product] because [problem] was costing businesses like yours [time/money]. Here's how we fix it 👇",
-      "The future of [industry] isn't complicated. It just needs the right tools. That's us 🖥️",
-      "Our users save an average of [X hours] per week. Here's exactly how 🧵",
-      "[Feature] is now live. We've been working on this for [X months] and we can't wait for you to try it ⚡",
-    ],
-    pillars: [
-      { name: "Educate", desc: "Tech tips, tutorials, industry insights that position you as the expert", emoji: "💡" },
-      { name: "Showcase", desc: "Product demos, feature highlights, UI walkthroughs", emoji: "🖥️" },
-      { name: "Social proof", desc: "Case studies, metrics, customer wins", emoji: "📊" },
-      { name: "Thought leadership", desc: "Opinions, predictions, takes on your industry", emoji: "🧠" },
-      { name: "Community", desc: "Feedback requests, polls, feature voting, user spotlights", emoji: "🤝" },
-    ],
-  },
-  {
-    id: "agric",
-    label: "Agriculture & Farming",
-    icon: "❧",
-    color: "#86d88a",
-    accent: "#bbf7bb",
-    bg: "linear-gradient(135deg, #0d1f0f 0%, #111a0e 100%)",
-    cardBg: "#0f1a10",
-    illustration: (
-      <svg viewBox="0 0 120 120" fill="none" xmlns="http://www.w3.org/2000/svg" style={{width:"100%",height:"100%"}}>
-        <path d="M20 90 Q35 75 50 80 Q65 85 80 70 Q95 55 110 60" stroke="#86d88a" strokeWidth="1.5" fill="none" opacity="0.5"/>
-        <line x1="10" y1="90" x2="110" y2="90" stroke="#86d88a" strokeWidth="1" opacity="0.3"/>
-        <path d="M40 90 L40 60 Q50 45 60 55 Q50 60 40 90Z" fill="#86d88a" opacity="0.2"/>
-        <path d="M40 65 Q55 55 65 65" stroke="#86d88a" strokeWidth="1" fill="none" opacity="0.6"/>
-        <path d="M65 90 L65 55 Q75 38 85 48 Q75 55 65 90Z" fill="#86d88a" opacity="0.2"/>
-        <path d="M65 62 Q80 52 88 62" stroke="#86d88a" strokeWidth="1" fill="none" opacity="0.6"/>
-        <circle cx="35" cy="25" r="12" stroke="#bbf7bb" strokeWidth="1" fill="none" opacity="0.3"/>
-        <path d="M29 20 Q35 14 41 20 Q35 26 29 20Z" fill="#86d88a" opacity="0.4"/>
-        <line x1="35" y1="37" x2="35" y2="50" stroke="#86d88a" strokeWidth="1" opacity="0.4"/>
-        <circle cx="88" cy="20" r="2" fill="#bbf7bb" opacity="0.6"/>
-        <circle cx="95" cy="28" r="1.5" fill="#bbf7bb" opacity="0.4"/>
-        <circle cx="80" cy="28" r="1.5" fill="#bbf7bb" opacity="0.4"/>
-      </svg>
-    ),
-    expenseCategories: ["Seeds & Inputs", "Equipment & Machinery", "Fuel & Transport", "Labour", "Fertilizers & Chemicals", "Land Rent", "Storage", "Marketing"],
-    incomeCategories: ["Crop Sales", "Livestock Sales", "Processed Products", "Government Subsidies", "Export Sales", "Agro-tourism"],
-    contentIdeas: [
-      { type: "Reel", idea: "Harvest day — raw and real footage of your farm in action", pillar: "Behind the scenes" },
-      { type: "Carousel", idea: "From seed to table — your full production process", pillar: "Educate" },
-      { type: "Static", idea: "What's in season right now + how to order from us", pillar: "Sell" },
-      { type: "Reel", idea: "Meet the people behind your food — introduce your team", pillar: "Relate" },
-      { type: "Carousel", idea: "5 things you didn't know about [your crop/product]", pillar: "Educate" },
-      { type: "Reel", idea: "Time-lapse of your crop growing over weeks", pillar: "Entertain" },
-      { type: "Static", idea: "Customer recipe using your produce", pillar: "Community" },
-      { type: "Carousel", idea: "Why buying local farm produce matters — make the case", pillar: "Educate" },
-      { type: "Reel", idea: "A day on the farm — sunrise to sunset", pillar: "Behind the scenes" },
-      { type: "Static", idea: "Seasonal availability chart — what's coming next", pillar: "Sell" },
-      { type: "Carousel", idea: "The challenges of farming no one talks about (honest post)", pillar: "Relate" },
-      { type: "Reel", idea: "Sustainable farming practices you use — and why they matter", pillar: "Values" },
-    ],
-    captions: [
-      "Every [product] you buy from us was grown with [values]. Here's what that actually means 🌱",
-      "Harvest season is here. Here's what's fresh, what's available, and how to get yours 🌾",
-      "Farming isn't just a job. It's [X] months of patience, work, and love — just for this moment 🙏",
-      "Real food. Real farmers. Real care. Order yours this week 👇",
-    ],
-    pillars: [
-      { name: "Harvest Stories", desc: "Real moments from the farm — raw, honest, beautiful", emoji: "🌾" },
-      { name: "Educate", desc: "Farming processes, nutrition facts, sustainability practices", emoji: "🌱" },
-      { name: "Sell", desc: "What's available, seasonal drops, order CTAs", emoji: "🛒" },
-      { name: "Values", desc: "Why you farm the way you do — your philosophy", emoji: "🌍" },
-      { name: "Community", desc: "Recipes, customer features, local partnerships", emoji: "🤝" },
-    ],
-  },
-  {
-    id: "food",
-    label: "Food & Restaurant",
-    icon: "◉",
-    color: "#fb923c",
-    accent: "#fed7aa",
-    bg: "linear-gradient(135deg, #1f1108 0%, #1a1210 100%)",
-    cardBg: "#1c1209",
-    illustration: (
-      <svg viewBox="0 0 120 120" fill="none" xmlns="http://www.w3.org/2000/svg" style={{width:"100%",height:"100%"}}>
-        <circle cx="60" cy="58" r="32" stroke="#fb923c" strokeWidth="1.5" fill="none" opacity="0.4"/>
-        <circle cx="60" cy="58" r="24" fill="#fb923c" opacity="0.08"/>
-        <path d="M44 50 Q52 44 60 50 Q68 44 76 50" stroke="#fb923c" strokeWidth="1.5" fill="none"/>
-        <path d="M46 62 Q53 70 60 66 Q67 70 74 62" stroke="#fed7aa" strokeWidth="1.2" fill="none" opacity="0.8"/>
-        <line x1="60" y1="26" x2="60" y2="20" stroke="#fb923c" strokeWidth="1.5" opacity="0.6"/>
-        <path d="M55 20 Q60 15 65 20" stroke="#fb923c" strokeWidth="1.5" fill="none" opacity="0.6"/>
-        <circle cx="85" cy="30" r="3" fill="#fb923c" opacity="0.3"/>
-        <circle cx="35" cy="32" r="2" fill="#fed7aa" opacity="0.4"/>
-        <circle cx="90" cy="75" r="2" fill="#fb923c" opacity="0.3"/>
-        <circle cx="30" cy="70" r="3" fill="#fed7aa" opacity="0.3"/>
-        <path d="M48 90 Q60 95 72 90" stroke="#fb923c" strokeWidth="1" fill="none" opacity="0.4"/>
-      </svg>
-    ),
-    expenseCategories: ["Ingredients & Food Cost", "Kitchen Equipment", "Staff Wages", "Rent & Utilities", "Packaging", "Delivery Fees", "Marketing", "Licences & Permits"],
-    incomeCategories: ["Dine-in Sales", "Takeaway & Delivery", "Catering", "Private Events", "Meal Kits", "Cooking Classes"],
-    contentIdeas: [
-      { type: "Reel", idea: "Satisfying food prep video — ASMR style, no talking needed", pillar: "Entertain" },
-      { type: "Carousel", idea: "What goes into our [signature dish] — ingredient breakdown", pillar: "Educate" },
-      { type: "Static", idea: "New menu item announcement — beautiful food photography", pillar: "Sell" },
-      { type: "Reel", idea: "Chef's table — watch the dish come together from scratch", pillar: "Behind the scenes" },
-      { type: "Carousel", idea: "Customer reviews — formatted beautifully with food photos", pillar: "Social proof" },
-      { type: "Reel", idea: "A day in our kitchen — the chaos and love behind every plate", pillar: "Relate" },
-      { type: "Static", idea: "Weekly specials + limited time offer", pillar: "Sell" },
-      { type: "Carousel", idea: "The story behind our restaurant — why we started", pillar: "Relate" },
-      { type: "Reel", idea: "Customer reaction to trying our food for the first time", pillar: "Social proof" },
-      { type: "Static", idea: "Sourcing story — where our [ingredient] comes from", pillar: "Values" },
-      { type: "Reel", idea: "Quick recipe using our signature flavours — at home version", pillar: "Educate" },
-      { type: "Carousel", idea: "Pairing guide — what to order together for the best experience", pillar: "Educate" },
-    ],
-    captions: [
-      "Some dishes you make. Some dishes you feel. This is [dish name] — and it's waiting for you 🍽️",
-      "Our [dish] has [X] ingredients, [X] hours of prep, and 100% love. Come taste the difference ❤️",
-      "New on the menu: [item]. Here's what's in it and why you need to try it this week 👇",
-      "The kitchen doesn't sleep. Neither does the flavour. We're open [hours] — come hungry 🔥",
-    ],
-    pillars: [
-      { name: "Food as art", desc: "Beautiful plating, colour-rich photos, visual-first content", emoji: "🍽️" },
-      { name: "Behind the kitchen", desc: "Prep footage, chef stories, sourcing journeys", emoji: "👨‍🍳" },
-      { name: "Social proof", desc: "Customer reviews, reactions, UGC reposts", emoji: "⭐" },
-      { name: "Sell", desc: "Menu highlights, specials, limited offers, delivery CTAs", emoji: "🛍️" },
-      { name: "Values", desc: "Where your food comes from, sustainability, community", emoji: "🌱" },
-    ],
-  },
-  {
-    id: "fashion",
-    label: "Fashion & Style",
-    icon: "◇",
-    color: "#e879a0",
-    accent: "#f9a8d4",
-    bg: "linear-gradient(135deg, #1f0d16 0%, #180d1a 100%)",
-    cardBg: "#1a0e16",
-    illustration: (
-      <svg viewBox="0 0 120 120" fill="none" xmlns="http://www.w3.org/2000/svg" style={{width:"100%",height:"100%"}}>
-        <path d="M50 20 L40 35 L25 35 L35 55 L30 95 L60 88 L90 95 L85 55 L95 35 L80 35 L70 20 L60 28 Z" stroke="#e879a0" strokeWidth="1.5" fill="none" opacity="0.5"/>
-        <path d="M50 20 L60 28 L70 20" stroke="#f9a8d4" strokeWidth="1.2" fill="none" opacity="0.7"/>
-        <path d="M40 35 Q60 42 80 35" stroke="#e879a0" strokeWidth="1" fill="none" opacity="0.5"/>
-        <path d="M35 55 Q60 62 85 55" stroke="#e879a0" strokeWidth="1" fill="none" opacity="0.4"/>
-        <circle cx="92" cy="22" r="5" stroke="#f9a8d4" strokeWidth="1" fill="none" opacity="0.5"/>
-        <circle cx="28" cy="22" r="3" fill="#e879a0" opacity="0.3"/>
-        <line x1="92" y1="27" x2="92" y2="35" stroke="#f9a8d4" strokeWidth="1" opacity="0.4"/>
-      </svg>
-    ),
-    expenseCategories: ["Inventory & Stock", "Packaging & Branding", "Shipping & Logistics", "Photography", "Marketing & Ads", "Platform Fees", "Storage", "Returns & Refunds"],
-    incomeCategories: ["Online Sales", "In-store Sales", "Wholesale", "Custom Orders", "Styling Services", "Brand Collaborations"],
-    contentIdeas: [
-      { type: "Reel", idea: "Styling the same piece 5 different ways", pillar: "Educate" },
-      { type: "Carousel", idea: "New collection drop — every piece with styling notes", pillar: "Sell" },
-      { type: "Reel", idea: "Get ready with me — wearing our latest piece", pillar: "Showcase" },
-      { type: "Carousel", idea: "How to build a capsule wardrobe on a budget", pillar: "Educate" },
-      { type: "Static", idea: "Customer outfit post — tag + feature them", pillar: "Community" },
-      { type: "Reel", idea: "Behind the scenes of a photoshoot", pillar: "Behind the scenes" },
-      { type: "Carousel", idea: "Trend report — what's in for [season]", pillar: "Educate" },
-      { type: "Reel", idea: "Packaging an order — satisfying and branded", pillar: "Entertain" },
-      { type: "Static", idea: "Sold out + restock announcement", pillar: "Sell" },
-      { type: "Carousel", idea: "Body type styling guide — something for everyone", pillar: "Inclusive" },
-      { type: "Reel", idea: "Before the brand: your story as a fashion entrepreneur", pillar: "Relate" },
-      { type: "Static", idea: "Flat lay of new arrivals with shop link", pillar: "Sell" },
-    ],
-    captions: [
-      "New in: [item name]. Here's everything you need to know — and how to style it 🖤",
-      "Style isn't about price tags. It's about knowing what works for you. Let us help 👗",
-      "She ordered this on a Tuesday. By Friday she had [X] compliments. Your turn 🛍️",
-      "Limited stock. Unlimited style. [Item] is back — but not for long ⏳",
-    ],
-    pillars: [
-      { name: "Style & Inspire", desc: "Outfit ideas, lookbooks, trend content that aspirationally sells", emoji: "✨" },
-      { name: "Showcase", desc: "Product features, new arrivals, collection stories", emoji: "👗" },
-      { name: "Community", desc: "Customer features, reposts, style challenges", emoji: "💬" },
-      { name: "Behind the brand", desc: "Your process, sourcing, business journey", emoji: "🎬" },
-      { name: "Sell", desc: "Limited drops, promotions, restocks, urgent CTAs", emoji: "🛍️" },
-    ],
-  },
-  {
-    id: "health",
-    label: "Health & Fitness",
-    icon: "◎",
-    color: "#38bdf8",
-    accent: "#7dd3fc",
-    bg: "linear-gradient(135deg, #0a1520 0%, #0d1825 100%)",
-    cardBg: "#0b1520",
-    illustration: (
-      <svg viewBox="0 0 120 120" fill="none" xmlns="http://www.w3.org/2000/svg" style={{width:"100%",height:"100%"}}>
-        <path d="M20 65 L35 45 L45 55 L60 30 L75 50 L85 42 L100 55" stroke="#38bdf8" strokeWidth="2" fill="none" opacity="0.7" strokeLinecap="round"/>
-        <circle cx="60" cy="30" r="4" fill="#38bdf8" opacity="0.5"/>
-        <rect x="25" y="78" width="70" height="3" rx="1.5" fill="#38bdf8" opacity="0.2"/>
-        <rect x="25" y="85" width="50" height="3" rx="1.5" fill="#38bdf8" opacity="0.15"/>
-        <rect x="25" y="92" width="35" height="3" rx="1.5" fill="#38bdf8" opacity="0.1"/>
-        <circle cx="88" cy="25" r="8" stroke="#7dd3fc" strokeWidth="1" fill="none" opacity="0.4"/>
-        <path d="M85 25 L88 28 L93 22" stroke="#38bdf8" strokeWidth="1.5" fill="none" opacity="0.7" strokeLinecap="round"/>
-        <circle cx="25" cy="30" r="3" fill="#38bdf8" opacity="0.3"/>
-        <circle cx="100" cy="75" r="2" fill="#7dd3fc" opacity="0.4"/>
-      </svg>
-    ),
-    expenseCategories: ["Equipment & Gear", "Supplements / Products", "Studio / Gym Rent", "Staff & Trainers", "App / Platform Fees", "Marketing", "Certifications", "Insurance"],
-    incomeCategories: ["Personal Training", "Group Classes", "Online Programs", "Supplements / Products", "Memberships", "Consultations"],
-    contentIdeas: [
-      { type: "Reel", idea: "Quick 5-minute workout anyone can do at home", pillar: "Educate" },
-      { type: "Carousel", idea: "Client transformation — their story in their words", pillar: "Social proof" },
-      { type: "Reel", idea: "What I eat in a day as a fitness professional", pillar: "Relate" },
-      { type: "Carousel", idea: "Debunking the top 5 fitness myths", pillar: "Educate" },
-      { type: "Static", idea: "New programme or service launch with limited spots", pillar: "Sell" },
-      { type: "Reel", idea: "A day in the life — from morning session to evening client", pillar: "Behind the scenes" },
-      { type: "Carousel", idea: "Meal prep guide for the week — simple and realistic", pillar: "Educate" },
-      { type: "Reel", idea: "Trending exercise — your take on form and safety", pillar: "Thought leadership" },
-      { type: "Static", idea: "Motivational quote + your personal take on it", pillar: "Inspire" },
-      { type: "Carousel", idea: "Beginner's guide to starting their fitness journey", pillar: "Educate" },
-      { type: "Reel", idea: "Behind the scenes of a client session (with permission)", pillar: "Showcase" },
-      { type: "Carousel", idea: "Why most people fail at fitness goals — honest breakdown", pillar: "Educate" },
-    ],
-    captions: [
-      "You don't need [X hours] at the gym. You need consistency. Here's a realistic plan 💪",
-      "[Client name] started [X months] ago not being able to [milestone]. Today she [achievement]. This is real 🙌",
-      "Hot take: [fitness opinion]. Agree or disagree? Drop it in the comments 👇",
-      "New programme dropping [date]. [X] spots only. This is for you if [ideal client description] 🔥",
-    ],
-    pillars: [
-      { name: "Educate", desc: "Workouts, nutrition, myth-busting — be the trusted expert", emoji: "💡" },
-      { name: "Transform", desc: "Client journeys, before/afters, real results", emoji: "💪" },
-      { name: "Inspire", desc: "Motivation, mindset, the mental side of fitness", emoji: "🧠" },
-      { name: "Relate", desc: "Your journey, your struggles, your real life", emoji: "❤️" },
-      { name: "Sell", desc: "Programmes, memberships, consultations done non-pushy", emoji: "🎯" },
-    ],
-  },
-  {
-    id: "realestate",
-    label: "Real Estate",
-    icon: "▣",
-    color: "#a78bfa",
-    accent: "#c4b5fd",
-    bg: "linear-gradient(135deg, #130f20 0%, #100d1f 100%)",
-    cardBg: "#120f1e",
-    illustration: (
-      <svg viewBox="0 0 120 120" fill="none" xmlns="http://www.w3.org/2000/svg" style={{width:"100%",height:"100%"}}>
-        <path d="M60 20 L25 50 L30 50 L30 95 L90 95 L90 50 L95 50 Z" stroke="#a78bfa" strokeWidth="1.5" fill="none" opacity="0.5"/>
-        <rect x="48" y="68" width="24" height="27" rx="1" stroke="#c4b5fd" strokeWidth="1" fill="none" opacity="0.4"/>
-        <rect x="36" y="58" width="14" height="14" rx="1" stroke="#a78bfa" strokeWidth="1" fill="none" opacity="0.5"/>
-        <rect x="70" y="58" width="14" height="14" rx="1" stroke="#a78bfa" strokeWidth="1" fill="none" opacity="0.5"/>
-        <path d="M60 20 L60 12" stroke="#a78bfa" strokeWidth="1.5" opacity="0.5"/>
-        <path d="M57 12 L60 8 L63 12" stroke="#a78bfa" strokeWidth="1" fill="none" opacity="0.5"/>
-        <circle cx="90" cy="28" r="8" stroke="#c4b5fd" strokeWidth="1" fill="none" opacity="0.4"/>
-        <text x="87" y="32" fontFamily="serif" fontSize="10" fill="#a78bfa" opacity="0.7">$</text>
-        <circle cx="22" cy="75" r="4" fill="#a78bfa" opacity="0.2"/>
-      </svg>
-    ),
-    expenseCategories: ["Marketing & Staging", "Photography & Video", "Admin & Legal", "Commission", "Travel", "Ads", "CRM & Tools", "Professional Development"],
-    incomeCategories: ["Sales Commission", "Rental Income", "Property Management", "Consulting Fees", "Referral Fees", "Leasing Fees"],
-    contentIdeas: [
-      { type: "Reel", idea: "Property tour — walk through like you're the buyer", pillar: "Showcase" },
-      { type: "Carousel", idea: "5 things to look for when buying a home (most people miss #3)", pillar: "Educate" },
-      { type: "Static", idea: "New listing announcement — beautiful photography with details", pillar: "Sell" },
-      { type: "Reel", idea: "Just sold! The story behind this property", pillar: "Social proof" },
-      { type: "Carousel", idea: "Market update — what's happening in [area] this month", pillar: "Educate" },
-      { type: "Reel", idea: "Day in the life of a real estate agent — honest version", pillar: "Relate" },
-      { type: "Carousel", idea: "First-time buyer's checklist — step by step", pillar: "Educate" },
-      { type: "Static", idea: "Client testimonial after closing", pillar: "Social proof" },
-      { type: "Reel", idea: "Neighbourhood spotlight — why [area] is worth buying in now", pillar: "Educate" },
-      { type: "Carousel", idea: "Rent vs buy — honest breakdown for your market", pillar: "Thought leadership" },
-      { type: "Static", idea: "Price reduced / open house this weekend", pillar: "Sell" },
-      { type: "Reel", idea: "Before and after — staged vs unstaged property", pillar: "Educate" },
-    ],
-    captions: [
-      "Just listed: [property details]. [X] beds, [X] baths, [X sqft]. The details that make this one special 👇",
-      "Most first-time buyers make this mistake. Here's what we wish someone told us sooner 🏠",
-      "The market in [area] is [state]. Here's what that means if you're buying or selling right now 📊",
-      "[Client name] found their dream home in [X] weeks. Here's exactly how we did it 🔑",
-    ],
-    pillars: [
-      { name: "Listings", desc: "Property showcases, tours, open house announcements", emoji: "🏡" },
-      { name: "Educate", desc: "Buying/selling guides, market insights, tips", emoji: "📚" },
-      { name: "Social proof", desc: "Client stories, sold announcements, reviews", emoji: "⭐" },
-      { name: "Local expertise", desc: "Neighbourhood content, market updates, area guides", emoji: "📍" },
-      { name: "Relate", desc: "Your agent story, behind the scenes, real moments", emoji: "❤️" },
-    ],
-  },
-  {
-    id: "education",
-    label: "Education & Coaching",
-    icon: "◑",
-    color: "#fbbf24",
-    accent: "#fde68a",
-    bg: "linear-gradient(135deg, #1a1508 0%, #181408 100%)",
-    cardBg: "#18140a",
-    illustration: (
-      <svg viewBox="0 0 120 120" fill="none" xmlns="http://www.w3.org/2000/svg" style={{width:"100%",height:"100%"}}>
-        <path d="M60 22 L95 40 L60 58 L25 40 Z" stroke="#fbbf24" strokeWidth="1.5" fill="none" opacity="0.5"/>
-        <path d="M25 40 L25 65 Q60 78 95 65 L95 40" stroke="#fbbf24" strokeWidth="1" fill="none" opacity="0.3"/>
-        <line x1="95" y1="40" x2="95" y2="72" stroke="#fbbf24" strokeWidth="1.5" opacity="0.5"/>
-        <path d="M91 72 L95 78 L99 72" stroke="#fbbf24" strokeWidth="1" fill="none" opacity="0.5"/>
-        <circle cx="35" cy="88" r="10" stroke="#fde68a" strokeWidth="1" fill="none" opacity="0.4"/>
-        <line x1="31" y1="88" x2="39" y2="88" stroke="#fbbf24" strokeWidth="1.5" opacity="0.6"/>
-        <line x1="35" y1="84" x2="35" y2="92" stroke="#fbbf24" strokeWidth="1.5" opacity="0.6"/>
-        <circle cx="60" cy="22" r="3" fill="#fbbf24" opacity="0.5"/>
-        <circle cx="82" cy="25" r="2" fill="#fde68a" opacity="0.4"/>
-        <circle cx="38" cy="25" r="2" fill="#fde68a" opacity="0.4"/>
-      </svg>
-    ),
-    expenseCategories: ["Course Platform Fees", "Marketing & Ads", "Tools & Software", "Content Creation", "Mentors & Coaches", "Community Platform", "Design & Branding", "Admin"],
-    incomeCategories: ["Course Sales", "1:1 Coaching", "Group Programmes", "Memberships", "Workshops", "Speaking Fees"],
-    contentIdeas: [
-      { type: "Carousel", idea: "The #1 mistake my students make (and how to fix it)", pillar: "Educate" },
-      { type: "Reel", idea: "Student success spotlight — their result in 60 seconds", pillar: "Social proof" },
-      { type: "Carousel", idea: "Free lesson: the core framework I teach all my students", pillar: "Educate" },
-      { type: "Static", idea: "Enrolment is open — what's inside the programme", pillar: "Sell" },
-      { type: "Reel", idea: "My story — why I became a [coach/educator]", pillar: "Relate" },
-      { type: "Carousel", idea: "5 questions to ask before hiring a coach in [niche]", pillar: "Educate" },
-      { type: "Reel", idea: "Behind the scenes of creating a course module", pillar: "Behind the scenes" },
-      { type: "Carousel", idea: "Free resource — downloadable guide or checklist", pillar: "Lead magnet" },
-      { type: "Static", idea: "Community win — celebrate a student's milestone", pillar: "Community" },
-      { type: "Reel", idea: "Live Q&A replay highlight — best question of the week", pillar: "Engage" },
-      { type: "Carousel", idea: "The roadmap to [desired outcome] — step by step", pillar: "Educate" },
-      { type: "Reel", idea: "Hot take on a common belief in your coaching niche", pillar: "Thought leadership" },
-    ],
-    captions: [
-      "[Student name] came to me struggling with [problem]. [X weeks] later, [result]. Here's what changed 👇",
-      "I'm opening [X] spots for [programme]. Here's exactly who it's for and what you'll walk away with 🎓",
-      "Free guide dropping this week: [topic]. Save this post and I'll send it to anyone who comments [word] ⬇️",
-      "Unpopular opinion: [belief in your niche]. Here's why I think most people have it backwards 💡",
-    ],
-    pillars: [
-      { name: "Free value", desc: "Tips, lessons, frameworks — give your best stuff away", emoji: "🎁" },
-      { name: "Student wins", desc: "Transformations, testimonials, community celebrations", emoji: "🏆" },
-      { name: "Your story", desc: "Why you teach, your journey, your credibility", emoji: "📖" },
-      { name: "Sell", desc: "Programme launches, enrolment opens, waitlists", emoji: "🎓" },
-      { name: "Thought leadership", desc: "Hot takes, contrarian views, your unique lens", emoji: "💡" },
-    ],
-  },
+  { id:"beauty", label:"Beauty & Wellness", accent:"#c4a882",
+    exp:["Products & Supplies","Equipment","Salon Rent","Staff Wages","Marketing","Training","Packaging","Software"],
+    inc:["Services","Product Sales","Gift Cards","Consultations","Online Courses","Collaborations"],
+    ideas:[{t:"Reel",i:"Before and after transformation reveal",p:"Showcase"},{t:"Carousel",i:"5 skincare mistakes your clients are making",p:"Educate"},{t:"Story",i:"Poll: Which treatment do you want first?",p:"Engage"},{t:"Reel",i:"Morning salon setup — satisfying and aesthetic",p:"Behind the scenes"},{t:"Static",i:"Client testimonial quote card",p:"Social proof"},{t:"Reel",i:"Trending beauty hack with your expert take",p:"Educate"},{t:"Carousel",i:"Your complete price list beautifully designed",p:"Showcase"},{t:"Reel",i:"Day in the life of a beauty business owner",p:"Relate"},{t:"Static",i:"Seasonal treatment promotion",p:"Sell"},{t:"Reel",i:"Product unboxing — new stock just arrived",p:"Entertain"},{t:"Carousel",i:"How to maintain your [service] at home",p:"Educate"},{t:"Story",i:"Behind the scenes of a full booking day",p:"Behind the scenes"}],
+    caps:["Your skin deserves the best — book your [service] today","Before she walked in, she felt [emotion]. When she walked out: [transformation]","Hot take: [beauty tip]. Do you agree?","We make you feel like the best version of yourself"],
+    pillars:[{n:"Transform",d:"Before and afters, client reveals, visual results"},{n:"Educate",d:"Skincare tips, product knowledge, myths vs facts"},{n:"Behind the scenes",d:"Your process, your space, your passion"},{n:"Social proof",d:"Reviews, testimonials, client love"},{n:"Sell",d:"Promotions, new services, booking CTAs"}],
+    checklist:["Register your business name","Set up Instagram and TikTok business accounts","Create a booking system (Booksy or Calendly)","Set your price list","Get professional liability insurance","Create a client consent and intake form","Set up a payment method","Take professional photos of your space","Create a Google Business Profile","Build a referral programme"],
+    hints:{ig:"Instagram > Profile > Insights > tap any post > Reach, Saves, Shares",tt:"TikTok > tap your video > three dots > Analytics",li:"LinkedIn > tap a post > View analytics"} },
+  { id:"tech", label:"Tech & Software", accent:"#4ade80",
+    exp:["Hosting & Infrastructure","Software Licenses","Developer Tools","Marketing & Ads","Team / Contractors","Legal & Compliance","Equipment","Events"],
+    inc:["SaaS Subscriptions","One-time Sales","Consulting","API Usage Fees","Partnerships","Grants & Funding"],
+    ideas:[{t:"Carousel",i:"5 tools every small business needs in 2026",p:"Educate"},{t:"Reel",i:"Watch us build a feature in real time",p:"Behind the scenes"},{t:"Static",i:"Customer success story with results",p:"Social proof"},{t:"Carousel",i:"We just launched [feature] — here is what it does",p:"Announce"},{t:"Reel",i:"The problem we solve in under 30 seconds",p:"Sell"},{t:"Carousel",i:"Common misconceptions about [your tech niche]",p:"Educate"},{t:"Static",i:"Milestone post — X users, X customers, X revenue",p:"Relate"},{t:"Reel",i:"Our team favourite productivity hacks",p:"Entertain"},{t:"Carousel",i:"How to get started with [your product] step by step",p:"Onboard"},{t:"Static",i:"Industry stat and your hot take on it",p:"Thought leadership"},{t:"Reel",i:"A bug we fixed and what we learned",p:"Transparency"},{t:"Carousel",i:"What we are building next — community sneak peek",p:"Engage"}],
+    caps:["We built [product] because [problem] was costing businesses time and money","The future of [industry] just needs the right tools","Our users save [X hours] per week. Here is how","[Feature] is now live — we have been working on this for months"],
+    pillars:[{n:"Educate",d:"Tech tips, tutorials, industry insights"},{n:"Showcase",d:"Product demos, feature highlights"},{n:"Social proof",d:"Case studies, metrics, customer wins"},{n:"Thought leadership",d:"Opinions, predictions, industry takes"},{n:"Community",d:"Feedback requests, polls, feature voting"}],
+    checklist:["Register your business name","Set up a GitHub or GitLab account","Choose your hosting provider","Set up a privacy policy and terms of service","Create a Stripe or payment integration","Set up error tracking (Sentry or similar)","Create a product roadmap","Set up a customer support channel","Build a landing page","Get your first 10 beta users"],
+    hints:{ig:"Instagram > Profile > Insights > tap any post > Reach, Saves, Shares",tt:"TikTok > tap your video > three dots > Analytics",li:"LinkedIn > tap a post > View analytics"} },
+  { id:"agric", label:"Agriculture & Farming", accent:"#86d88a",
+    exp:["Seeds & Inputs","Equipment & Machinery","Fuel & Transport","Labour","Fertilizers & Chemicals","Land Rent","Storage","Marketing"],
+    inc:["Crop Sales","Livestock Sales","Processed Products","Government Subsidies","Export Sales","Agro-tourism"],
+    ideas:[{t:"Reel",i:"Harvest day — raw and real footage of your farm",p:"Behind the scenes"},{t:"Carousel",i:"From seed to table — your full production process",p:"Educate"},{t:"Static",i:"What is in season right now and how to order",p:"Sell"},{t:"Reel",i:"Meet the people behind your food",p:"Relate"},{t:"Carousel",i:"5 things you did not know about [your crop]",p:"Educate"},{t:"Reel",i:"Time-lapse of your crop growing over weeks",p:"Entertain"},{t:"Static",i:"Customer recipe using your produce",p:"Community"},{t:"Carousel",i:"Why buying local farm produce matters",p:"Educate"},{t:"Reel",i:"A day on the farm from sunrise to sunset",p:"Behind the scenes"},{t:"Static",i:"Seasonal availability chart",p:"Sell"},{t:"Carousel",i:"The challenges of farming no one talks about",p:"Relate"},{t:"Reel",i:"Sustainable farming practices you use and why",p:"Values"}],
+    caps:["Every [product] you buy from us was grown with [values]","Harvest season is here — here is what is fresh and how to get yours","Farming is not just a job. It is months of patience, work, and love","Real food. Real farmers. Real care. Order yours this week"],
+    pillars:[{n:"Harvest Stories",d:"Real moments from the farm"},{n:"Educate",d:"Farming processes, nutrition facts, sustainability"},{n:"Sell",d:"What is available, seasonal drops, order CTAs"},{n:"Values",d:"Why you farm the way you do"},{n:"Community",d:"Recipes, customer features, local partnerships"}],
+    checklist:["Register your farm as a business","Get all required agricultural permits","Set up a record-keeping system","Open a dedicated business bank account","Set up a WhatsApp or order management system","Create social media accounts","Get crop insurance","Set up a delivery or pickup system","Find your first 5 regular customers","Join a local farmers market or co-op"],
+    hints:{ig:"Instagram > Profile > Insights > tap any post > Reach, Saves, Shares",tt:"TikTok > tap your video > three dots > Analytics",li:"LinkedIn > tap a post > View analytics"} },
+  { id:"food", label:"Food & Restaurant", accent:"#fb923c",
+    exp:["Ingredients & Food Cost","Kitchen Equipment","Staff Wages","Rent & Utilities","Packaging","Delivery Fees","Marketing","Licences & Permits"],
+    inc:["Dine-in Sales","Takeaway & Delivery","Catering","Private Events","Meal Kits","Cooking Classes"],
+    ideas:[{t:"Reel",i:"Satisfying food prep video — ASMR style",p:"Entertain"},{t:"Carousel",i:"What goes into our signature dish",p:"Educate"},{t:"Static",i:"New menu item announcement with beautiful photography",p:"Sell"},{t:"Reel",i:"Chef at work — watch the dish come together",p:"Behind the scenes"},{t:"Carousel",i:"Customer reviews with food photos",p:"Social proof"},{t:"Reel",i:"A day in our kitchen — the chaos and love",p:"Relate"},{t:"Static",i:"Weekly specials and limited time offer",p:"Sell"},{t:"Carousel",i:"The story behind our restaurant and why we started",p:"Relate"},{t:"Reel",i:"Customer reaction to trying our food for the first time",p:"Social proof"},{t:"Static",i:"Sourcing story — where our main ingredient comes from",p:"Values"},{t:"Reel",i:"Quick recipe using our signature flavours",p:"Educate"},{t:"Carousel",i:"Pairing guide — what to order together",p:"Educate"}],
+    caps:["Some dishes you make. Some dishes you feel. This is [dish name]","Our [dish] has [X] ingredients, [X] hours of prep, and 100 percent love","New on the menu: [item]. Here is why you need to try it","The kitchen does not sleep. We are open [hours] — come hungry"],
+    pillars:[{n:"Food as art",d:"Beautiful plating, colour-rich, visual-first content"},{n:"Behind the kitchen",d:"Prep footage, chef stories, sourcing journeys"},{n:"Social proof",d:"Customer reviews, reactions, UGC reposts"},{n:"Sell",d:"Menu highlights, specials, limited offers"},{n:"Values",d:"Where your food comes from, sustainability"}],
+    checklist:["Register your food business","Get food handler certification","Apply for food service licence","Set up a POS system","Create your menu with pricing","Set up delivery on Glovo or Jumia Food","Open a business bank account","Get food safety insurance","Create a food photography setup","Set up a reservation or ordering system"],
+    hints:{ig:"Instagram > Profile > Insights > tap any post > Reach, Saves, Shares",tt:"TikTok > tap your video > three dots > Analytics",li:"LinkedIn > tap a post > View analytics"} },
+  { id:"fashion", label:"Fashion & Style", accent:"#e879a0",
+    exp:["Inventory & Stock","Packaging & Branding","Shipping & Logistics","Photography","Marketing & Ads","Platform Fees","Storage","Returns & Refunds"],
+    inc:["Online Sales","In-store Sales","Wholesale","Custom Orders","Styling Services","Brand Collaborations"],
+    ideas:[{t:"Reel",i:"Styling the same piece 5 different ways",p:"Educate"},{t:"Carousel",i:"New collection drop with styling notes",p:"Sell"},{t:"Reel",i:"Get ready with me wearing our latest piece",p:"Showcase"},{t:"Carousel",i:"How to build a capsule wardrobe on a budget",p:"Educate"},{t:"Static",i:"Customer outfit post — tag and feature them",p:"Community"},{t:"Reel",i:"Behind the scenes of a photoshoot",p:"Behind the scenes"},{t:"Carousel",i:"Trend report — what is in for this season",p:"Educate"},{t:"Reel",i:"Packaging an order — satisfying and branded",p:"Entertain"},{t:"Static",i:"Sold out and restock announcement",p:"Sell"},{t:"Carousel",i:"Body type styling guide — something for everyone",p:"Inclusive"},{t:"Reel",i:"Before the brand: your story as a fashion entrepreneur",p:"Relate"},{t:"Static",i:"Flat lay of new arrivals with shop link",p:"Sell"}],
+    caps:["New in: [item name]. Here is how to style it","Style is not about price tags. It is about knowing what works for you","She ordered this on a Tuesday. By Friday she had [X] compliments","Limited stock. Unlimited style. [Item] is back — but not for long"],
+    pillars:[{n:"Style and Inspire",d:"Outfit ideas, lookbooks, trend content"},{n:"Showcase",d:"Product features, new arrivals, collection stories"},{n:"Community",d:"Customer features, reposts, style challenges"},{n:"Behind the brand",d:"Your process, sourcing, business journey"},{n:"Sell",d:"Limited drops, promotions, restocks"}],
+    checklist:["Register your fashion brand name","Set up an online store (Shopify or Paystack)","Create sizing guides","Set up your returns policy","Get professional product photography","Set up Instagram Shopping","Register for tax collection","Find a reliable shipping partner","Build a supplier and manufacturer relationship","Create a lookbook for each collection"],
+    hints:{ig:"Instagram > Profile > Insights > tap any post > Reach, Saves, Shares",tt:"TikTok > tap your video > three dots > Analytics",li:"LinkedIn > tap a post > View analytics"} },
+  { id:"health", label:"Health & Fitness", accent:"#38bdf8",
+    exp:["Equipment & Gear","Supplements and Products","Studio or Gym Rent","Staff and Trainers","App and Platform Fees","Marketing","Certifications","Insurance"],
+    inc:["Personal Training","Group Classes","Online Programs","Supplements and Products","Memberships","Consultations"],
+    ideas:[{t:"Reel",i:"Quick 5-minute workout anyone can do at home",p:"Educate"},{t:"Carousel",i:"Client transformation — their story in their words",p:"Social proof"},{t:"Reel",i:"What I eat in a day as a fitness professional",p:"Relate"},{t:"Carousel",i:"Debunking the top 5 fitness myths",p:"Educate"},{t:"Static",i:"New programme launch with limited spots",p:"Sell"},{t:"Reel",i:"A day in the life from morning session to evening client",p:"Behind the scenes"},{t:"Carousel",i:"Meal prep guide for the week — simple and realistic",p:"Educate"},{t:"Reel",i:"Trending exercise — your take on form and safety",p:"Thought leadership"},{t:"Static",i:"Motivational quote and your personal take on it",p:"Inspire"},{t:"Carousel",i:"A beginner guide to starting their fitness journey",p:"Educate"},{t:"Reel",i:"Behind the scenes of a client session",p:"Showcase"},{t:"Carousel",i:"Why most people fail at fitness goals — honest breakdown",p:"Educate"}],
+    caps:["You do not need [X hours] at the gym. You need consistency","[Client] started [X months] ago unable to [milestone]. Today: [achievement]","Hot take: [fitness opinion]. Agree or disagree?","New programme dropping [date]. [X] spots only"],
+    pillars:[{n:"Educate",d:"Workouts, nutrition, myth-busting"},{n:"Transform",d:"Client journeys, before and afters, real results"},{n:"Inspire",d:"Motivation, mindset, mental fitness"},{n:"Relate",d:"Your journey, your struggles, your real life"},{n:"Sell",d:"Programmes, memberships, consultations"}],
+    checklist:["Get your fitness certification","Register your business","Get professional liability insurance","Set up a booking system","Create your service packages and pricing","Set up a payment method","Create a client intake and health form","Build your online presence","Create a free lead magnet such as a workout PDF","Set up client progress tracking"],
+    hints:{ig:"Instagram > Profile > Insights > tap any post > Reach, Saves, Shares",tt:"TikTok > tap your video > three dots > Analytics",li:"LinkedIn > tap a post > View analytics"} },
+  { id:"realestate", label:"Real Estate", accent:"#a78bfa",
+    exp:["Marketing and Staging","Photography and Video","Admin and Legal","Commission","Travel","Ads","CRM and Tools","Professional Development"],
+    inc:["Sales Commission","Rental Income","Property Management","Consulting Fees","Referral Fees","Leasing Fees"],
+    ideas:[{t:"Reel",i:"Property tour — walk through like you are the buyer",p:"Showcase"},{t:"Carousel",i:"5 things to look for when buying a home",p:"Educate"},{t:"Static",i:"New listing announcement with beautiful photography",p:"Sell"},{t:"Reel",i:"Just sold — the story behind this property",p:"Social proof"},{t:"Carousel",i:"Market update — what is happening this month",p:"Educate"},{t:"Reel",i:"Day in the life of a real estate agent",p:"Relate"},{t:"Carousel",i:"First-time buyer checklist step by step",p:"Educate"},{t:"Static",i:"Client testimonial after closing",p:"Social proof"},{t:"Reel",i:"Neighbourhood spotlight — why this area is worth buying in",p:"Educate"},{t:"Carousel",i:"Rent vs buy — honest breakdown for your market",p:"Thought leadership"},{t:"Static",i:"Price reduced and open house this weekend",p:"Sell"},{t:"Reel",i:"Before and after — staged vs unstaged property",p:"Educate"}],
+    caps:["Just listed: [property details]. The details that make this one special","Most first-time buyers make this mistake — here is what we wish someone told us","The market in [area] right now — here is what it means","[Client] found their dream home in [X] weeks. Here is how we did it"],
+    pillars:[{n:"Listings",d:"Property showcases, tours, open houses"},{n:"Educate",d:"Buying and selling guides, market insights"},{n:"Social proof",d:"Client stories, sold announcements"},{n:"Local expertise",d:"Neighbourhood content, market updates"},{n:"Relate",d:"Your agent story, behind the scenes"}],
+    checklist:["Get your real estate licence","Join a brokerage","Set up your CRM","Create a professional headshot and bio","Build your listing presentation","Set up automated email follow-ups","Create a Google Business Profile","Join local property groups online","Set up a referral system","Create a market report template"],
+    hints:{ig:"Instagram > Profile > Insights > tap any post > Reach, Saves, Shares",tt:"TikTok > tap your video > three dots > Analytics",li:"LinkedIn > tap a post > View analytics"} },
+  { id:"education", label:"Education & Coaching", accent:"#fbbf24",
+    exp:["Course Platform Fees","Marketing and Ads","Tools and Software","Content Creation","Mentors and Coaches","Community Platform","Design and Branding","Admin"],
+    inc:["Course Sales","1:1 Coaching","Group Programmes","Memberships","Workshops","Speaking Fees"],
+    ideas:[{t:"Carousel",i:"The number one mistake my students make and how to fix it",p:"Educate"},{t:"Reel",i:"Student success spotlight — their result in 60 seconds",p:"Social proof"},{t:"Carousel",i:"Free lesson: the core framework I teach all my students",p:"Educate"},{t:"Static",i:"Enrolment is open — what is inside the programme",p:"Sell"},{t:"Reel",i:"My story — why I became a coach or educator",p:"Relate"},{t:"Carousel",i:"5 questions to ask before hiring a coach",p:"Educate"},{t:"Reel",i:"Behind the scenes of creating a course module",p:"Behind the scenes"},{t:"Carousel",i:"Free resource — downloadable guide or checklist",p:"Lead magnet"},{t:"Static",i:"Community win — celebrate a student milestone",p:"Community"},{t:"Reel",i:"Live Q&A replay highlight — best question of the week",p:"Engage"},{t:"Carousel",i:"The roadmap to [desired outcome] step by step",p:"Educate"},{t:"Reel",i:"Hot take on a common belief in your coaching niche",p:"Thought leadership"}],
+    caps:["[Student] came to me struggling with [problem]. [X weeks] later: [result]","I am opening [X] spots for [programme]. Here is exactly who it is for","Free guide dropping this week: [topic]. Comment [word] and I will send it","Unpopular opinion: [belief in your niche]. Here is why most people have it backwards"],
+    pillars:[{n:"Free value",d:"Tips, lessons, frameworks — give your best away"},{n:"Student wins",d:"Transformations, testimonials, celebrations"},{n:"Your story",d:"Why you teach, your journey, your credibility"},{n:"Sell",d:"Programme launches, enrolment opens, waitlists"},{n:"Thought leadership",d:"Hot takes, contrarian views, your unique lens"}],
+    checklist:["Get certified in your coaching niche","Register your business","Choose your course platform such as Teachable or Kajabi","Create your signature framework","Set up a payment processor","Build your email list from day one","Create a free lead magnet","Set up a community on WhatsApp, Discord, or Circle","Create your first course outline","Get your first 3 testimonials"],
+    hints:{ig:"Instagram > Profile > Insights > tap any post > Reach, Saves, Shares",tt:"TikTok > tap your video > three dots > Analytics",li:"LinkedIn > tap a post > View analytics"} },
 ];
 
-const PLATFORMS = ["Instagram", "TikTok", "LinkedIn", "Facebook", "Twitter/X", "YouTube"];
-const STATUS_OPTIONS = ["Idea", "In Progress", "Scheduled", "Posted"];
-const STATUS_COLORS = { "Idea": "#94a3b8", "In Progress": "#fbbf24", "Scheduled": "#818cf8", "Posted": "#4ade80" };
-const TABS = ["Home", "Content Planner", "Finance", "Brand Hub", "Guide"];
+const PLATS=["Instagram","TikTok","LinkedIn","Facebook","Twitter/X","YouTube"];
+const STAT=["Idea","In Progress","Scheduled","Posted"];
+const SC={"Idea":"#94a3b8","In Progress":"#f59e0b","Scheduled":"#6366f1","Posted":"#16a34a"};
+const TABS=["Home","Brand","Content","Finance","Guide"];
+const FTABS=["Overview","Transactions","Customers","Vendors","Calculator","Invoice"];
 
-function fmt(n) { return "$" + Number(n||0).toLocaleString("en-US",{minimumFractionDigits:2,maximumFractionDigits:2}); }
-function uid() { return Math.random().toString(36).slice(2); }
+function uid(){return Math.random().toString(36).slice(2);}
+function money(n){return "$"+Number(n||0).toLocaleString("en-US",{minimumFractionDigits:2,maximumFractionDigits:2});}
+function pct(a,b){return b===0?0:Math.min(Math.round((a/b)*100),100);}
 
-// ─── ONBOARDING ───────────────────────────────────────────────────────────────
-function Onboarding({ onSelect }) {
-  const [hovered, setHovered] = useState(null);
-  return (
-    <div style={{ minHeight:"100vh", display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center", padding:"40px 24px", background:"#0a0a0f" }}>
-      <style>{`@import url('https://fonts.googleapis.com/css2?family=Fraunces:ital,wght@0,300;0,700;1,300&family=DM+Sans:wght@300;400;500&display=swap');`}</style>
-      <div style={{ maxWidth:680, width:"100%", textAlign:"center" }}>
-        <div style={{ fontFamily:"'Fraunces', Georgia, serif", fontSize:42, fontWeight:700, color:"#f5f0e8", letterSpacing:"-1px", lineHeight:1.1, marginBottom:12 }}>
-          Welcome to <span style={{ fontStyle:"italic", color:"#c4a882" }}>BizKit</span>
+function Auth({onAuth}){
+  const [mode,setMode]=useState("login");
+  const [email,setEmail]=useState("");
+  const [pw,setPw]=useState("");
+  const [busy,setBusy]=useState(false);
+  const [err,setErr]=useState("");
+  const [msg,setMsg]=useState("");
+  async function go(){
+    setErr("");setMsg("");setBusy(true);
+    try{
+      if(mode==="signup"){const{error:e}=await sb.auth.signUp({email,password:pw});if(e)throw e;setMsg("Account created! Check your email to confirm, then log in.");setMode("login");}
+      else{const{data,error:e}=await sb.auth.signInWithPassword({email,password:pw});if(e)throw e;onAuth(data.user);}
+    }catch(e){setErr(e.message);}
+    setBusy(false);
+  }
+  async function reset(){if(!email){setErr("Enter your email first.");return;}setBusy(true);const{error:e}=await sb.auth.resetPasswordForEmail(email);if(e)setErr(e.message);else setMsg("Password reset email sent.");setBusy(false);}
+  const fi={background:"#f9fafb",border:"1px solid #e5e7eb",color:"#111",borderRadius:10,padding:"11px 14px",fontFamily:"'DM Sans',sans-serif",fontSize:14,width:"100%",outline:"none"};
+  return(
+    <div style={{minHeight:"100vh",display:"flex",alignItems:"center",justifyContent:"center",background:"#f9fafb",padding:24,fontFamily:"'DM Sans',sans-serif"}}>
+      <style>{`@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&family=Playfair+Display:wght@600;700&display=swap');*{box-sizing:border-box;margin:0;padding:0;}`}</style>
+      <div style={{background:"#fff",border:"1px solid #e5e7eb",borderRadius:20,padding:40,width:"100%",maxWidth:400,boxShadow:"0 2px 8px rgba(0,0,0,0.06)"}}>
+        <div style={{textAlign:"center",marginBottom:32}}>
+          <div style={{width:48,height:48,background:"#111",borderRadius:14,margin:"0 auto 14px",display:"flex",alignItems:"center",justifyContent:"center"}}><svg width="22" height="22" viewBox="0 0 22 22" fill="none"><path d="M2 8.5L11 2l9 6.5V19a1.5 1.5 0 01-1.5 1.5h-15A1.5 1.5 0 012 19V8.5z" stroke="#fff" strokeWidth="1.4" fill="none"/><path d="M8 20.5V13h6v7.5" stroke="#fff" strokeWidth="1.4"/></svg></div>
+          <div style={{fontFamily:"'Playfair Display',Georgia,serif",fontSize:24,fontWeight:700,color:"#111",marginBottom:4}}>BizKit Pro</div>
+          <div style={{fontSize:13,color:"#6b7280"}}>Your complete small business OS</div>
         </div>
-        <div style={{ fontFamily:"'DM Sans', sans-serif", fontSize:16, color:"#6b7280", marginBottom:48, fontWeight:300, lineHeight:1.6 }}>
-          Your complete business toolkit — built around your niche.<br/>Start by telling us what kind of business you run.
+        <div style={{display:"flex",background:"#f3f4f6",borderRadius:10,padding:3,marginBottom:24,gap:3}}>
+          {["login","signup"].map(m=><button key={m} onClick={()=>setMode(m)} style={{flex:1,padding:"8px 0",borderRadius:8,border:"none",cursor:"pointer",fontFamily:"'DM Sans',sans-serif",fontWeight:600,fontSize:13,background:mode===m?"#fff":"transparent",color:mode===m?"#111":"#9ca3af",transition:"all 0.15s"}}>{m==="login"?"Log In":"Sign Up"}</button>)}
         </div>
-        <div style={{ display:"grid", gridTemplateColumns:"repeat(auto-fill, minmax(150px, 1fr))", gap:12 }}>
-          {NICHES.map(n => (
-            <div key={n.id}
-              onMouseEnter={() => setHovered(n.id)}
-              onMouseLeave={() => setHovered(null)}
-              onClick={() => onSelect(n)}
-              style={{
-                background: hovered===n.id ? n.cardBg : "#111116",
-                border: `1px solid ${hovered===n.id ? n.color+"66" : "#1e1e28"}`,
-                borderRadius:16, padding:"24px 16px", cursor:"pointer",
-                transition:"all 0.25s", transform: hovered===n.id ? "translateY(-3px)" : "none",
-                boxShadow: hovered===n.id ? `0 8px 32px ${n.color}22` : "none",
-              }}>
-              <div style={{ width:56, height:56, margin:"0 auto 12px", opacity: hovered===n.id ? 1 : 0.5, transition:"opacity 0.25s" }}>
-                {n.illustration}
-              </div>
-              <div style={{ fontFamily:"'DM Sans', sans-serif", fontSize:13, fontWeight:500, color: hovered===n.id ? n.color : "#6b7280", transition:"color 0.25s", lineHeight:1.3 }}>{n.label}</div>
-            </div>
+        {err&&<div style={{background:"#fef2f2",border:"1px solid #fecaca",borderRadius:10,padding:"10px 14px",fontSize:13,color:"#dc2626",marginBottom:16,fontWeight:500}}>{err}</div>}
+        {msg&&<div style={{background:"#f0fdf4",border:"1px solid #bbf7d0",borderRadius:10,padding:"10px 14px",fontSize:13,color:"#166534",marginBottom:16,fontWeight:500}}>{msg}</div>}
+        <div style={{display:"grid",gap:14}}>
+          <div><label style={{fontSize:11,fontWeight:700,color:"#374151",textTransform:"uppercase",letterSpacing:"0.06em",display:"block",marginBottom:6}}>Email</label><input type="email" value={email} onChange={e=>setEmail(e.target.value)} onKeyDown={e=>e.key==="Enter"&&go()} placeholder="you@example.com" style={fi}/></div>
+          <div><label style={{fontSize:11,fontWeight:700,color:"#374151",textTransform:"uppercase",letterSpacing:"0.06em",display:"block",marginBottom:6}}>Password</label><input type="password" value={pw} onChange={e=>setPw(e.target.value)} onKeyDown={e=>e.key==="Enter"&&go()} placeholder="minimum 6 characters" style={fi}/></div>
+          <button onClick={go} disabled={busy} style={{padding:"12px 24px",borderRadius:10,border:"none",cursor:"pointer",fontFamily:"'DM Sans',sans-serif",fontWeight:700,fontSize:14,background:G,color:"#fff",opacity:busy?0.7:1}}>{busy?"Please wait...":mode==="login"?"Log In":"Create Account"}</button>
+          {mode==="login"&&<button onClick={reset} style={{background:"none",border:"none",color:"#9ca3af",fontSize:12,cursor:"pointer",fontFamily:"'DM Sans',sans-serif",textDecoration:"underline"}}>Forgot your password?</button>}
+        </div>
+        <div style={{marginTop:24,padding:14,background:"#f9fafb",borderRadius:10,textAlign:"center"}}><div style={{fontSize:12,color:"#6b7280",lineHeight:1.6}}>Need help? Email us at<br/><a href="mailto:support@bizkitpro.app" style={{color:G,fontWeight:600,textDecoration:"none"}}>support@bizkitpro.app</a></div></div>
+      </div>
+    </div>
+  );
+}
+
+function NicheSelect({onSelect}){
+  const [hov,setHov]=useState(null);
+  return(
+    <div style={{minHeight:"100vh",background:"#f9fafb",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",padding:"40px 24px",fontFamily:"'DM Sans',sans-serif"}}>
+      <div style={{maxWidth:720,width:"100%",textAlign:"center",marginBottom:36}}>
+        <div style={{fontFamily:"'Playfair Display',Georgia,serif",fontSize:34,fontWeight:700,color:"#111",marginBottom:10}}>What kind of business do you run?</div>
+        <div style={{fontSize:15,color:"#6b7280",lineHeight:1.6}}>BizKit Pro personalises your content ideas, financial categories, and setup checklist to your specific industry.</div>
+      </div>
+      <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(158px,1fr))",gap:12,maxWidth:720,width:"100%"}}>
+        {NICHES.map(n=>(
+          <div key={n.id} onClick={()=>onSelect(n)} onMouseEnter={()=>setHov(n.id)} onMouseLeave={()=>setHov(null)}
+            style={{background:"#fff",border:`1.5px solid ${hov===n.id?"#111":"#e5e7eb"}`,borderRadius:14,padding:"22px 16px",cursor:"pointer",transition:"all 0.15s",transform:hov===n.id?"translateY(-2px)":"none",boxShadow:hov===n.id?"0 4px 14px rgba(0,0,0,0.09)":"0 1px 2px rgba(0,0,0,0.04)",textAlign:"center"}}>
+            <div style={{width:36,height:36,background:hov===n.id?"#111":"#f3f4f6",borderRadius:10,margin:"0 auto 12px",display:"flex",alignItems:"center",justifyContent:"center",transition:"background 0.15s"}}><div style={{width:14,height:14,borderRadius:"50%",background:hov===n.id?"#fff":n.accent}}/></div>
+            <div style={{fontSize:13,fontWeight:600,color:hov===n.id?"#111":"#374151",lineHeight:1.3}}>{n.label}</div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function BrandSetup({niche,onSave}){
+  const [form,setForm]=useState({name:"",tagline:"",primaryColor:G,audience:""});
+  const ready=form.name.trim().length>0;
+  const fi={background:"#f9fafb",border:"1px solid #e5e7eb",color:"#111",borderRadius:10,padding:"11px 14px",fontFamily:"'DM Sans',sans-serif",fontSize:14,width:"100%",outline:"none"};
+  return(
+    <div style={{minHeight:"100vh",background:"#f9fafb",display:"flex",alignItems:"center",justifyContent:"center",padding:24,fontFamily:"'DM Sans',sans-serif"}}>
+      <div style={{background:"#fff",border:"1px solid #e5e7eb",borderRadius:20,padding:40,width:"100%",maxWidth:500,boxShadow:"0 2px 8px rgba(0,0,0,0.06)"}}>
+        <div style={{fontFamily:"'Playfair Display',Georgia,serif",fontSize:24,color:"#111",marginBottom:4,fontWeight:700}}>Set up your brand</div>
+        <div style={{fontSize:13,color:"#6b7280",marginBottom:28}}>Personalise your BizKit Pro experience — niche: <strong style={{color:"#111"}}>{niche.label}</strong></div>
+        <div style={{display:"grid",gap:16}}>
+          {[["Business Name","name","e.g. Glow Studio, FreshFarm Co."],["Tagline (optional)","tagline","e.g. Helping you glow inside and out"],["Who do you serve?","audience","e.g. Women aged 25-40 who want natural beauty results"]].map(([l,k,ph])=>(
+            <div key={k}><label style={{fontSize:11,fontWeight:700,color:"#374151",textTransform:"uppercase",letterSpacing:"0.06em",display:"block",marginBottom:6}}>{l}</label><input value={form[k]} onChange={e=>setForm({...form,[k]:e.target.value})} placeholder={ph} style={fi}/></div>
           ))}
-        </div>
-        <div style={{ marginTop:32, fontSize:12, color:"#374151", fontFamily:"'DM Sans', sans-serif" }}>
-          You can change your niche anytime from settings
+          <div>
+            <label style={{fontSize:11,fontWeight:700,color:"#374151",textTransform:"uppercase",letterSpacing:"0.06em",display:"block",marginBottom:6}}>Brand Colour</label>
+            <div style={{display:"flex",gap:12,alignItems:"center"}}><input type="color" value={form.primaryColor} onChange={e=>setForm({...form,primaryColor:e.target.value})} style={{width:52,height:44,border:"1px solid #e5e7eb",borderRadius:10,cursor:"pointer",padding:4}}/><div style={{fontSize:13,color:"#6b7280",lineHeight:1.5}}>Your brand colour themes the entire app —<br/>buttons, accents, highlights</div></div>
+          </div>
+          {form.name&&<div style={{background:"#f9fafb",border:"1px solid #e5e7eb",borderRadius:12,padding:16}}><div style={{fontSize:10,color:"#9ca3af",marginBottom:8,fontWeight:700,textTransform:"uppercase",letterSpacing:"0.06em"}}>Preview</div><div style={{fontFamily:"'Playfair Display',Georgia,serif",fontSize:20,fontWeight:700,color:"#111"}}>{form.name}</div>{form.tagline&&<div style={{fontSize:13,color:"#6b7280",marginTop:2}}>{form.tagline}</div>}<div style={{display:"inline-block",marginTop:10,padding:"4px 12px",background:form.primaryColor,color:"#fff",borderRadius:20,fontSize:11,fontWeight:700}}>{niche.label}</div></div>}
+          <button onClick={()=>{if(ready)onSave(form);}} style={{padding:"13px 24px",borderRadius:10,border:"none",cursor:ready?"pointer":"not-allowed",fontFamily:"'DM Sans',sans-serif",fontWeight:700,fontSize:14,background:ready?"#111":"#e5e7eb",color:ready?"#fff":"#9ca3af",transition:"all 0.15s",marginTop:4}}>{ready?"Enter BizKit Pro →":"Enter your business name to continue"}</button>
         </div>
       </div>
     </div>
   );
 }
 
-// ─── MAIN APP ─────────────────────────────────────────────────────────────────
-export default function App() {
-  const [niche, setNiche] = useState(null);
-  const [tab, setTab] = useState("Home");
-  const [posts, setPosts] = useState([]);
-  const [transactions, setTransactions] = useState([]);
-  const [brand, setBrand] = useState({ name:"", tagline:"", audience:"", voice:"", mission:"", goals:"", colors:"" });
-  const [showPostForm, setShowPostForm] = useState(false);
-  const [showTxForm, setShowTxForm] = useState(false);
-  const [editingBrand, setEditingBrand] = useState(true);
-  const [brandDraft, setBrandDraft] = useState(brand);
-  const [filterMonth, setFilterMonth] = useState(new Date().toISOString().slice(0,7));
-  const [filterStatus, setFilterStatus] = useState("All");
-  const [newPost, setNewPost] = useState({ date:"", platform:"Instagram", type:"Reel", caption:"", hashtags:"", status:"Idea", notes:"" });
-  const [newTx, setNewTx] = useState({ date:"", type:"Income", category:"", description:"", amount:"" });
-  const [ideaFilter, setIdeaFilter] = useState("All");
+export default function App(){
+  const [user,setUser]=useState(null);
+  const [loading,setLoading]=useState(true);
+  const [profile,setProfile]=useState(null);
+  const [niche,setNiche]=useState(null);
+  const [tab,setTab]=useState("Home");
+  const [ftab,setFtab]=useState("Overview");
+  const [posts,setPosts]=useState([]);
+  const [txs,setTxs]=useState([]);
+  const [custs,setCusts]=useState([]);
+  const [vendors,setVendors]=useState([]);
+  const [analytics,setAnalytics]=useState([]);
+  const [checks,setChecks]=useState({});
+  const [custom,setCustom]=useState([]);
+  const [newItem,setNewItem]=useState("");
+  const [goal,setGoal]=useState(0);
+  const [goalSet,setGoalSet]=useState(false);
+  const [goalInput,setGoalInput]=useState("");
+  const [fMonth,setFMonth]=useState(new Date().toISOString().slice(0,7));
+  const [fStatus,setFStatus]=useState("All");
+  const [ideaF,setIdeaF]=useState("All");
+  const [margin,setMargin]=useState({cost:"",sell:"",qty:1});
+  const [inv,setInv]=useState({clientName:"",clientEmail:"",service:"",amount:"",date:"",notes:""});
+  const [invShow,setInvShow]=useState(false);
+  const [showPF,setShowPF]=useState(false);
+  const [showTF,setShowTF]=useState(false);
+  const [showCF,setShowCF]=useState(false);
+  const [showVF,setShowVF]=useState(false);
+  const [showAF,setShowAF]=useState(false);
+  const [np,setNp]=useState({date:"",platform:"Instagram",type:"Reel",caption:"",hashtags:"",status:"Idea",notes:""});
+  const [nt,setNt]=useState({date:"",type:"Income",category:"",description:"",amount:""});
+  const [nc,setNc]=useState({name:"",phone:"",email:"",address:"",notes:"",spent:"",lastBuy:""});
+  const [nv,setNv]=useState({name:"",contact:"",phone:"",email:"",supplies:"",terms:"",outstanding:""});
+  const [na,setNa]=useState({date:"",platform:"Instagram",caption:"",views:"",reach:"",saves:"",shares:"",comments:"",likes:""});
 
-  useEffect(() => { if (niche) setNewTx(t => ({ ...t, category: niche.incomeCategories[0] })); }, [niche]);
+  useEffect(()=>{
+    sb.auth.getSession().then(({data:{session}})=>{setUser(session?.user??null);setLoading(false);});
+    const{data:{subscription}}=sb.auth.onAuthStateChange((_,session)=>{setUser(session?.user??null);});
+    return()=>subscription.unsubscribe();
+  },[]);
 
-  if (!niche) return <Onboarding onSelect={n => { setNiche(n); }} />;
+  useEffect(()=>{if(user)load();},[user]);
 
-  const c = niche.color;
-  const income = transactions.filter(t=>t.type==="Income").reduce((a,b)=>a+b.amount,0);
-  const expense = transactions.filter(t=>t.type==="Expense").reduce((a,b)=>a+b.amount,0);
-  const profit = income - expense;
-  const filteredPosts = posts.filter(p => {
-    const m = !filterMonth || p.date.startsWith(filterMonth);
-    const s = filterStatus==="All" || p.status===filterStatus;
-    return m && s;
-  });
-  const filteredTx = transactions.filter(t => !filterMonth || t.date.startsWith(filterMonth));
-  const ideas = ideaFilter==="All" ? niche.contentIdeas : niche.contentIdeas.filter(i=>i.pillar===ideaFilter);
-  const pillars = [...new Set(niche.contentIdeas.map(i=>i.pillar))];
-
-  function addPost() {
-    if (!newPost.date||!newPost.caption) return;
-    setPosts([...posts, {...newPost, id:uid()}]);
-    setNewPost({ date:"", platform:"Instagram", type:"Reel", caption:"", hashtags:"", status:"Idea", notes:"" });
-    setShowPostForm(false);
+  async function load(){
+    const uid=user.id;
+    const{data:p}=await sb.from("profiles").select("*").eq("id",uid).single();
+    if(p){setProfile(p);setGoal(p.monthly_goal||0);setGoalSet(p.goal_set||false);const n=NICHES.find(n=>n.id===p.niche_id);if(n){setNiche(n);setNt(t=>({...t,category:n.inc[0]}));}}
+    const{data:po}=await sb.from("posts").select("*").eq("user_id",uid).order("created_at",{ascending:false});if(po)setPosts(po);
+    const{data:tx}=await sb.from("transactions").select("*").eq("user_id",uid).order("created_at",{ascending:false});if(tx)setTxs(tx);
+    const{data:cu}=await sb.from("customers").select("*").eq("user_id",uid).order("created_at",{ascending:false});if(cu)setCusts(cu);
+    const{data:ve}=await sb.from("vendors").select("*").eq("user_id",uid).order("created_at",{ascending:false});if(ve)setVendors(ve);
+    const{data:an}=await sb.from("analytics").select("*").eq("user_id",uid).order("created_at",{ascending:false});if(an)setAnalytics(an);
+    const{data:ch}=await sb.from("checklist_items").select("*").eq("user_id",uid);
+    if(ch){const st={};const cu2=[];ch.forEach(c=>{st[c.item_key]=c.done;if(c.is_custom)cu2.push(c.label);});setChecks(st);setCustom(cu2);}
   }
-  function addTx() {
-    if (!newTx.date||!newTx.description||!newTx.amount) return;
-    setTransactions([...transactions, {...newTx, id:uid(), amount:Number(newTx.amount)}]);
-    setNewTx({ date:"", type:"Income", category:niche.incomeCategories[0], description:"", amount:"" });
-    setShowTxForm(false);
+
+  async function saveProf(nicheId,bd){await sb.from("profiles").upsert({id:user.id,email:user.email,niche_id:nicheId,business_name:bd.name,tagline:bd.tagline,primary_color:bd.primaryColor,audience:bd.audience,monthly_goal:0,goal_set:false});}
+  async function addPost(){if(!np.date||!np.caption)return;const{data}=await sb.from("posts").insert({...np,user_id:user.id}).select().single();if(data)setPosts([data,...posts]);setNp({date:"",platform:"Instagram",type:"Reel",caption:"",hashtags:"",status:"Idea",notes:""});setShowPF(false);}
+  async function delPost(id){await sb.from("posts").delete().eq("id",id);setPosts(posts.filter(p=>p.id!==id));}
+  async function updStat(id,status){await sb.from("posts").update({status}).eq("id",id);setPosts(posts.map(p=>p.id===id?{...p,status}:p));}
+  async function addTx(){if(!nt.date||!nt.description||!nt.amount)return;const{data}=await sb.from("transactions").insert({...nt,amount:Number(nt.amount),user_id:user.id}).select().single();if(data)setTxs([data,...txs]);setNt({date:"",type:"Income",category:niche.inc[0],description:"",amount:""});setShowTF(false);}
+  async function delTx(id){await sb.from("transactions").delete().eq("id",id);setTxs(txs.filter(t=>t.id!==id));}
+  async function addCust(){if(!nc.name)return;const{data}=await sb.from("customers").insert({name:nc.name,phone:nc.phone,email:nc.email,address:nc.address,notes:nc.notes,total_spent:Number(nc.spent)||0,last_purchase:nc.lastBuy,user_id:user.id}).select().single();if(data)setCusts([data,...custs]);setNc({name:"",phone:"",email:"",address:"",notes:"",spent:"",lastBuy:""});setShowCF(false);}
+  async function delCust(id){await sb.from("customers").delete().eq("id",id);setCusts(custs.filter(c=>c.id!==id));}
+  async function addVendor(){if(!nv.name)return;const{data}=await sb.from("vendors").insert({name:nv.name,contact:nv.contact,phone:nv.phone,email:nv.email,supplies:nv.supplies,payment_terms:nv.terms,outstanding:Number(nv.outstanding)||0,user_id:user.id}).select().single();if(data)setVendors([data,...vendors]);setNv({name:"",contact:"",phone:"",email:"",supplies:"",terms:"",outstanding:""});setShowVF(false);}
+  async function delVendor(id){await sb.from("vendors").delete().eq("id",id);setVendors(vendors.filter(v=>v.id!==id));}
+  async function addAnalytic(){if(!na.caption)return;const{data}=await sb.from("analytics").insert({...na,views:Number(na.views)||0,reach:Number(na.reach)||0,saves:Number(na.saves)||0,shares:Number(na.shares)||0,comments:Number(na.comments)||0,likes:Number(na.likes)||0,user_id:user.id}).select().single();if(data)setAnalytics([data,...analytics]);setNa({date:"",platform:"Instagram",caption:"",views:"",reach:"",saves:"",shares:"",comments:"",likes:""});setShowAF(false);}
+  async function delAnalytic(id){await sb.from("analytics").delete().eq("id",id);setAnalytics(analytics.filter(a=>a.id!==id));}
+
+  async function toggleCheck(key,isCustom,label){
+    const val=!checks[key];setChecks(s=>({...s,[key]:val}));
+    const{data:ex}=await sb.from("checklist_items").select("id").eq("user_id",user.id).eq("item_key",key).single();
+    if(ex)await sb.from("checklist_items").update({done:val}).eq("id",ex.id);
+    else await sb.from("checklist_items").insert({user_id:user.id,item_key:key,label,done:val,is_custom:isCustom});
   }
+  async function addCustom(){if(!newItem.trim())return;const key=`cus_${uid()}`;await sb.from("checklist_items").insert({user_id:user.id,item_key:key,label:newItem.trim(),done:false,is_custom:true});setCustom([...custom,newItem.trim()]);setChecks(s=>({...s,[key]:false}));setNewItem("");}
+  async function removeCustom(label){await sb.from("checklist_items").delete().eq("user_id",user.id).eq("label",label).eq("is_custom",true);setCustom(custom.filter(l=>l!==label));}
+  async function signOut(){await sb.auth.signOut();setUser(null);setProfile(null);setNiche(null);setPosts([]);setTxs([]);setCusts([]);setVendors([]);setAnalytics([]);setChecks({});setCustom([]);}
 
-  const S = {
-    root: { minHeight:"100vh", background: niche.bg, fontFamily:"'DM Sans', sans-serif", color:"#e8e6f0" },
-    header: { borderBottom:`1px solid ${c}22`, padding:"0 24px", background:"rgba(0,0,0,0.3)", backdropFilter:"blur(10px)", position:"sticky", top:0, zIndex:50 },
-    inner: { maxWidth:980, margin:"0 auto" },
-    tab: (active) => ({
-      padding:"14px 18px", background:"transparent", border:"none", cursor:"pointer",
-      fontFamily:"'DM Sans', sans-serif", fontSize:13, fontWeight: active?600:400,
-      color: active ? c : "#4b5563", borderBottom: active ? `2px solid ${c}` : "2px solid transparent",
-      transition:"all 0.2s", whiteSpace:"nowrap",
-    }),
-    card: { background:"rgba(0,0,0,0.3)", border:`1px solid ${c}18`, borderRadius:16, padding:24 },
-    label: { fontSize:11, fontWeight:700, color:c, textTransform:"uppercase", letterSpacing:"0.08em", display:"block", marginBottom:6 },
-    input: { background:"rgba(0,0,0,0.4)", border:`1px solid ${c}25`, color:"#e8e6f0", borderRadius:10, padding:"10px 14px", fontFamily:"'DM Sans', sans-serif", fontSize:14, width:"100%", outline:"none" },
-    btn: (variant) => ({
-      padding: variant==="sm" ? "7px 14px" : "11px 22px",
-      borderRadius:10, border:"none", cursor:"pointer",
-      fontFamily:"'DM Sans', sans-serif", fontWeight:600,
-      fontSize: variant==="sm" ? 12 : 14, transition:"all 0.2s",
-      background: variant==="ghost" ? "transparent" : variant==="danger" ? "#ef444422" : `${c}22`,
-      color: variant==="danger" ? "#ef4444" : variant==="ghost" ? "#6b7280" : c,
-      border: variant==="ghost" ? `1px solid #1e1e28` : `1px solid ${variant==="danger" ? "#ef444444" : c+"44"}`,
-    }),
-    primaryBtn: { padding:"11px 24px", borderRadius:10, border:"none", cursor:"pointer", fontFamily:"'DM Sans', sans-serif", fontWeight:600, fontSize:14, background:c, color:"#0a0a0f", transition:"all 0.2s" },
-  };
+  if(loading)return(<div style={{minHeight:"100vh",display:"flex",alignItems:"center",justifyContent:"center",background:"#f9fafb",fontFamily:"'DM Sans',sans-serif"}}><div style={{fontSize:14,color:"#6b7280"}}>Loading...</div></div>);
+  if(!user)return<Auth onAuth={u=>setUser(u)}/>;
+  if(!niche)return<NicheSelect onSelect={n=>setNiche(n)}/>;
+  if(!profile?.business_name)return<BrandSetup niche={niche} onSave={async bd=>{setProfile({...profile,...bd,niche_id:niche.id});await saveProf(niche.id,bd);}}/>;
 
-  return (
-    <div style={S.root}>
+  const AC=profile.primary_color||G;
+  const income=txs.filter(t=>t.type==="Income").reduce((a,b)=>a+Number(b.amount),0);
+  const expense=txs.filter(t=>t.type==="Expense").reduce((a,b)=>a+Number(b.amount),0);
+  const profit=income-expense;
+  const fposts=posts.filter(p=>(!fMonth||p.date?.startsWith(fMonth))&&(fStatus==="All"||p.status===fStatus));
+  const ftxs=txs.filter(t=>!fMonth||t.date?.startsWith(fMonth));
+  const pillars=[...new Set(niche.ideas.map(i=>i.p))];
+  const ideas=ideaF==="All"?niche.ideas:niche.ideas.filter(i=>i.p===ideaF);
+  const allChecks=[...niche.checklist.map((l,i)=>({key:`pre_${i}`,label:l,custom:false})),...custom.map((l,i)=>({key:`cus_${i}`,label:l,custom:true}))];
+  const checkDone=allChecks.filter(c=>checks[c.key]).length;
+  const costN=parseFloat(margin.cost)||0,sellN=parseFloat(margin.sell)||0;
+  const mpct=sellN>0?((sellN-costN)/sellN*100).toFixed(1):0;
+  const ppu=sellN-costN,tpro=ppu*(parseInt(margin.qty)||1);
+  const mkp=costN>0?((sellN-costN)/costN*100).toFixed(1):0;
+
+  const card={background:"#fff",border:"1px solid #e5e7eb",borderRadius:16,padding:24};
+  const lbl={fontSize:11,fontWeight:700,color:"#374151",textTransform:"uppercase",letterSpacing:"0.06em",display:"block",marginBottom:6};
+  const inp={background:"#f9fafb",border:"1px solid #e5e7eb",color:"#111",borderRadius:10,padding:"10px 14px",fontFamily:"'DM Sans',sans-serif",fontSize:14,width:"100%",outline:"none"};
+  const PBtn={padding:"10px 20px",borderRadius:10,border:"none",cursor:"pointer",fontFamily:"'DM Sans',sans-serif",fontWeight:700,fontSize:14,background:"#111",color:"#fff"};
+  const GBtn={padding:"9px 16px",borderRadius:10,border:"1px solid #e5e7eb",background:"#fff",color:"#374151",cursor:"pointer",fontFamily:"'DM Sans',sans-serif",fontWeight:600,fontSize:13};
+  const DBtn={padding:"5px 10px",borderRadius:7,border:"1px solid #fecaca",background:"#fef2f2",color:"#dc2626",cursor:"pointer",fontFamily:"'DM Sans',sans-serif",fontSize:11,fontWeight:600};
+  const ST={fontFamily:"'Playfair Display',Georgia,serif",fontSize:24,fontWeight:700,color:"#111",marginBottom:4};
+  const SS={fontSize:13,color:"#6b7280",marginBottom:24};
+
+  return(
+    <div style={{minHeight:"100vh",background:"#f9fafb",fontFamily:"'DM Sans',sans-serif",color:"#111"}}>
       <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Fraunces:ital,wght@0,300;0,700;1,300&family=DM+Sans:wght@300;400;500;600&display=swap');
-        * { box-sizing:border-box; margin:0; padding:0; }
-        ::-webkit-scrollbar { width:4px; } ::-webkit-scrollbar-thumb { background:${c}44; border-radius:4px; }
-        input,select,textarea { background:rgba(0,0,0,0.4); border:1px solid ${c}25; color:#e8e6f0; border-radius:10px; padding:10px 14px; font-family:'DM Sans',sans-serif; font-size:14px; width:100%; outline:none; transition:border 0.2s; }
-        input:focus,select:focus,textarea:focus { border-color:${c}88; }
-        textarea { resize:vertical; min-height:80px; }
-        select option { background:#111116; color:#e8e6f0; }
-        .g2 { display:grid; grid-template-columns:1fr 1fr; gap:16px; }
-        .g3 { display:grid; grid-template-columns:1fr 1fr 1fr; gap:16px; }
-        .g4 { display:grid; grid-template-columns:repeat(4,1fr); gap:14px; }
-        @media(max-width:640px) { .g2,.g3,.g4 { grid-template-columns:1fr; } }
-        .pill { display:inline-flex; align-items:center; padding:3px 10px; border-radius:20px; font-size:11px; font-weight:600; letter-spacing:0.04em; }
-        .tag { background:rgba(0,0,0,0.3); border:1px solid ${c}22; padding:3px 10px; border-radius:6px; font-size:11px; color:${c}; display:inline-block; }
-        .modal-bg { position:fixed; inset:0; background:rgba(0,0,0,0.75); display:flex; align-items:center; justify-content:center; z-index:100; padding:20px; backdrop-filter:blur(4px); }
-        .modal { background:#111116; border:1px solid ${c}33; border-radius:20px; padding:28px; width:100%; max-width:520px; max-height:90vh; overflow-y:auto; }
-        .postcard { background:rgba(0,0,0,0.3); border:1px solid ${c}18; border-radius:14px; padding:18px; margin-bottom:10px; transition:border-color 0.2s; }
-        .postcard:hover { border-color:${c}44; }
-        .ideacard { background:rgba(0,0,0,0.25); border:1px solid ${c}18; border-radius:12px; padding:16px; transition:all 0.2s; cursor:default; }
-        .ideacard:hover { border-color:${c}55; background:rgba(0,0,0,0.4); transform:translateY(-2px); }
-        .txrow { display:grid; grid-template-columns:80px 1fr 110px 90px 60px; gap:12px; align-items:center; padding:12px 16px; background:rgba(0,0,0,0.25); border:1px solid ${c}15; border-radius:10px; margin-bottom:8px; font-size:13px; }
-        @media(max-width:640px) { .txrow { grid-template-columns:1fr; } }
-        .section-title { font-family:'Fraunces',Georgia,serif; font-size:24px; font-weight:700; color:#f5f0e8; margin-bottom:4px; }
-        .section-sub { font-size:13px; color:#6b7280; margin-bottom:24px; font-weight:300; }
-        .guide-section { background:rgba(0,0,0,0.25); border-left:2px solid ${c}; border-radius:0 12px 12px 0; padding:20px 24px; margin-bottom:16px; }
+        @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&family=Playfair+Display:wght@600;700&display=swap');
+        *{box-sizing:border-box;margin:0;padding:0;}
+        ::-webkit-scrollbar{width:4px;} ::-webkit-scrollbar-thumb{background:#d1d5db;border-radius:4px;}
+        input,select,textarea{background:#f9fafb;border:1px solid #e5e7eb;color:#111;border-radius:10px;padding:10px 14px;font-family:'DM Sans',sans-serif;font-size:14px;width:100%;outline:none;transition:border 0.15s;}
+        input:focus,select:focus,textarea:focus{border-color:#111;}
+        textarea{resize:vertical;min-height:80px;}
+        select option{background:#fff;color:#111;}
+        .g2{display:grid;grid-template-columns:1fr 1fr;gap:16px;}
+        .g3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px;}
+        .g4{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;}
+        @media(max-width:640px){.g2,.g3,.g4{grid-template-columns:1fr;}}
+        .mo{position:fixed;inset:0;background:rgba(0,0,0,0.35);display:flex;align-items:center;justify-content:center;z-index:100;padding:20px;backdrop-filter:blur(4px);}
+        .md{background:#fff;border:1px solid #e5e7eb;border-radius:20px;padding:28px;width:100%;max-width:520px;max-height:90vh;overflow-y:auto;box-shadow:0 8px 30px rgba(0,0,0,0.12);}
+        .row{background:#fff;border:1px solid #e5e7eb;border-radius:12px;padding:16px;margin-bottom:10px;transition:border-color 0.15s;}
+        .row:hover{border-color:#374151;}
+        .sc{background:#fff;border:1px solid #e5e7eb;border-radius:14px;padding:18px;}
+        .idea{background:#fff;border:1px solid #e5e7eb;border-radius:12px;padding:14px;cursor:pointer;transition:all 0.15s;}
+        .idea:hover{border-color:#111;box-shadow:0 2px 8px rgba(0,0,0,0.06);transform:translateY(-1px);}
+        .tag{background:#f3f4f6;border:1px solid #e5e7eb;padding:3px 10px;border-radius:6px;font-size:11px;color:#374151;display:inline-block;font-weight:600;}
+        .nb{padding:11px 16px;background:transparent;border:none;cursor:pointer;font-family:'DM Sans',sans-serif;font-size:13px;white-space:nowrap;transition:all 0.15s;}
+        .pill{padding:6px 14px;border-radius:20px;border:1px solid #e5e7eb;cursor:pointer;font-family:'DM Sans',sans-serif;font-size:12px;font-weight:600;background:#fff;color:#6b7280;transition:all 0.15s;}
+        .fsb{padding:8px 14px;border-radius:8px;border:1px solid #e5e7eb;background:#fff;color:#6b7280;cursor:pointer;font-family:'DM Sans',sans-serif;font-size:12px;font-weight:500;transition:all 0.15s;}
+        .gsec{background:#fff;border-left:3px solid ${AC};border-radius:0 12px 12px 0;padding:20px 24px;margin-bottom:14px;}
       `}</style>
 
-      {/* Header */}
-      <div style={S.header}>
-        <div style={{...S.inner, display:"flex", alignItems:"center", justifyContent:"space-between"}}>
-          <div style={{ display:"flex", alignItems:"center", gap:16 }}>
-            <div style={{ fontFamily:"'Fraunces',Georgia,serif", fontSize:18, fontStyle:"italic", color:c }}>BizKit</div>
-            <div style={{ width:1, height:16, background:"#1e1e28" }}/>
-            <div style={{ fontSize:12, color:"#6b7280" }}>{niche.label}</div>
+      {/* HEADER */}
+      <div style={{background:"#fff",borderBottom:"1px solid #e5e7eb",padding:"0 24px",position:"sticky",top:0,zIndex:50}}>
+        <div style={{maxWidth:1000,margin:"0 auto",display:"flex",alignItems:"center",justifyContent:"space-between",height:56}}>
+          <div style={{display:"flex",alignItems:"center",gap:14}}>
+            <div style={{width:30,height:30,background:"#111",borderRadius:8,display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}><svg width="15" height="15" viewBox="0 0 15 15" fill="none"><path d="M1 5.5L7.5 1 14 5.5V13a1 1 0 01-1 1H2a1 1 0 01-1-1V5.5z" stroke="#fff" strokeWidth="1.2" fill="none"/><path d="M5 14V9h5v5" stroke="#fff" strokeWidth="1.2"/></svg></div>
+            <span style={{fontFamily:"'Playfair Display',Georgia,serif",fontSize:16,fontWeight:700,color:"#111"}}>BizKit Pro</span>
+            <div style={{width:1,height:14,background:"#e5e7eb"}}/>
+            <span style={{fontSize:13,fontWeight:600,color:"#374151"}}>{profile.business_name}</span>
           </div>
-          <button style={{ ...S.btn("ghost"), fontSize:11 }} onClick={() => setNiche(null)}>Switch niche</button>
+          <button onClick={signOut} style={{background:"none",border:"1px solid #e5e7eb",borderRadius:8,padding:"5px 12px",cursor:"pointer",fontSize:12,color:"#6b7280",fontFamily:"'DM Sans',sans-serif",fontWeight:500}}>Sign out</button>
         </div>
-        <div style={{...S.inner, display:"flex", overflowX:"auto", gap:0}}>
-          {TABS.map(t => <button key={t} style={S.tab(tab===t)} onClick={()=>setTab(t)}>{t}</button>)}
+        <div style={{maxWidth:1000,margin:"0 auto",display:"flex",overflowX:"auto",gap:0}}>
+          {TABS.map(t=><button key={t} className="nb" onClick={()=>setTab(t)} style={{fontWeight:tab===t?700:400,color:tab===t?"#111":"#6b7280",borderBottom:tab===t?"2px solid #111":"2px solid transparent"}}>{t}</button>)}
         </div>
       </div>
 
-      <div style={{...S.inner, padding:"32px 24px"}}>
+      <div style={{maxWidth:1000,margin:"0 auto",padding:"28px 24px"}}>
 
-        {/* ── HOME ── */}
-        {tab==="Home" && (
+        {/* HOME */}
+        {tab==="Home"&&(
           <div>
-            <div style={{ marginBottom:32 }}>
-              <div style={{ display:"flex", alignItems:"flex-start", gap:20, flexWrap:"wrap" }}>
-                <div style={{ width:64, height:64, flexShrink:0 }}>{niche.illustration}</div>
-                <div>
-                  <div style={{ fontFamily:"'Fraunces',Georgia,serif", fontSize:32, fontWeight:700, color:"#f5f0e8", lineHeight:1.1, marginBottom:6 }}>
-                    Your {niche.label} OS
-                  </div>
-                  <div style={{ fontSize:14, color:"#6b7280", fontWeight:300, maxWidth:480 }}>
-                    Everything you need to manage content, track money, and grow your business — built specifically for {niche.label.toLowerCase()} businesses.
-                  </div>
+            <div style={{...card,marginBottom:24,borderTop:`3px solid ${AC}`}}>
+              <div style={{display:"flex",alignItems:"center",gap:18,flexWrap:"wrap"}}>
+                <div style={{width:48,height:48,borderRadius:12,background:"#111",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}><svg width="24" height="24" viewBox="0 0 24 24" fill="none"><path d="M3 9.5L12 3l9 6.5V20a1.5 1.5 0 01-1.5 1.5h-15A1.5 1.5 0 013 20V9.5z" stroke="#fff" strokeWidth="1.5" fill="none"/><path d="M9 21.5V14h6v7.5" stroke="#fff" strokeWidth="1.5"/></svg></div>
+                <div style={{flex:1}}>
+                  <div style={{fontFamily:"'Playfair Display',Georgia,serif",fontSize:26,fontWeight:700,color:"#111",lineHeight:1.1,marginBottom:3}}>{profile.business_name}</div>
+                  {profile.tagline&&<div style={{fontSize:14,color:"#6b7280"}}>{profile.tagline}</div>}
+                  <div style={{marginTop:8,display:"inline-block",padding:"3px 10px",background:AC,color:"#fff",borderRadius:20,fontSize:11,fontWeight:700}}>{niche.label}</div>
                 </div>
-              </div>
-            </div>
-
-            <div className="g4" style={{ marginBottom:24 }}>
-              {[
-                { label:"Total Income", value:fmt(income), color:"#4ade80" },
-                { label:"Total Expenses", value:fmt(expense), color:"#f87171" },
-                { label:"Net Profit", value:fmt(profit), color: profit>=0?"#4ade80":"#f87171" },
-                { label:"Content Posts", value:posts.length, color:c, sub:`${posts.filter(p=>p.status==="Posted").length} posted` },
-              ].map(item => (
-                <div key={item.label} style={{ ...S.card, padding:20 }}>
-                  <div style={{ fontSize:11, color:item.color, fontWeight:700, textTransform:"uppercase", letterSpacing:"0.08em", marginBottom:10 }}>{item.label}</div>
-                  <div style={{ fontFamily:"'Fraunces',Georgia,serif", fontSize:28, fontWeight:700, color:item.color }}>{item.value}</div>
-                  {item.sub && <div style={{ fontSize:11, color:"#4b5563", marginTop:4 }}>{item.sub}</div>}
-                </div>
-              ))}
-            </div>
-
-            <div className="g2" style={{ marginBottom:24 }}>
-              <div style={S.card}>
-                <div style={{ fontFamily:"'Fraunces',Georgia,serif", fontSize:16, color:"#f5f0e8", marginBottom:16 }}>Content Pipeline</div>
-                {STATUS_OPTIONS.map(s => {
-                  const count = posts.filter(p=>p.status===s).length;
-                  const pct = posts.length ? Math.round(count/posts.length*100) : 0;
-                  return (
-                    <div key={s} style={{ marginBottom:14 }}>
-                      <div style={{ display:"flex", justifyContent:"space-between", fontSize:12, marginBottom:5 }}>
-                        <span style={{ color:STATUS_COLORS[s], fontWeight:600 }}>{s}</span>
-                        <span style={{ color:"#4b5563" }}>{count}</span>
-                      </div>
-                      <div style={{ height:4, background:"rgba(255,255,255,0.05)", borderRadius:2, overflow:"hidden" }}>
-                        <div style={{ height:"100%", width:pct+"%", background:STATUS_COLORS[s], borderRadius:2, transition:"width 0.4s" }}/>
-                      </div>
-                    </div>
-                  );
-                })}
-                {posts.length===0 && <div style={{ fontSize:12, color:"#4b5563" }}>No posts yet — add your first in Content Planner</div>}
-              </div>
-
-              <div style={S.card}>
-                <div style={{ fontFamily:"'Fraunces',Georgia,serif", fontSize:16, color:"#f5f0e8", marginBottom:16 }}>Your Content Pillars</div>
-                {niche.pillars.map(p => (
-                  <div key={p.name} style={{ display:"flex", gap:10, alignItems:"flex-start", padding:"10px 0", borderBottom:`1px solid ${c}10` }}>
-                    <span style={{ fontSize:18 }}>{p.emoji}</span>
-                    <div>
-                      <div style={{ fontSize:13, fontWeight:600, color:c, marginBottom:2 }}>{p.name}</div>
-                      <div style={{ fontSize:11, color:"#6b7280", lineHeight:1.4 }}>{p.desc}</div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            {/* Quick actions */}
-            <div style={{ display:"flex", gap:12, flexWrap:"wrap" }}>
-              <button style={S.primaryBtn} onClick={() => { setTab("Content Planner"); setShowPostForm(true); }}>+ Add Content</button>
-              <button style={S.btn()} onClick={() => { setTab("Finance"); setShowTxForm(true); }}>+ Add Transaction</button>
-              <button style={S.btn("ghost")} onClick={() => setTab("Guide")}>Read the Guide →</button>
-            </div>
-          </div>
-        )}
-
-        {/* ── CONTENT PLANNER ── */}
-        {tab==="Content Planner" && (
-          <div>
-            <div style={{ display:"flex", justifyContent:"space-between", alignItems:"flex-start", marginBottom:24, flexWrap:"wrap", gap:12 }}>
-              <div>
-                <div className="section-title">Content Planner</div>
-                <div className="section-sub">Plan, track, and execute your {niche.label.toLowerCase()} content</div>
-              </div>
-              <button style={S.primaryBtn} onClick={() => setShowPostForm(true)}>+ Add Post</button>
-            </div>
-
-            {/* Ideas Bank */}
-            <div style={{ ...S.card, marginBottom:24, background:`linear-gradient(135deg, rgba(0,0,0,0.5), ${c}08)` }}>
-              <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:16, flexWrap:"wrap", gap:10 }}>
-                <div>
-                  <div style={{ fontFamily:"'Fraunces',Georgia,serif", fontSize:16, color:"#f5f0e8" }}>Ideas Bank for {niche.label}</div>
-                  <div style={{ fontSize:12, color:"#6b7280", marginTop:2 }}>Tap any idea to add it to your planner</div>
-                </div>
-                <div style={{ display:"flex", gap:8, flexWrap:"wrap" }}>
-                  {["All", ...pillars].map(p => (
-                    <button key={p} onClick={() => setIdeaFilter(p)}
-                      style={{ padding:"5px 12px", borderRadius:20, border:`1px solid ${ideaFilter===p ? c : c+"33"}`, background: ideaFilter===p ? c+"22" : "transparent", color: ideaFilter===p ? c : "#6b7280", fontSize:11, fontWeight:600, cursor:"pointer", fontFamily:"'DM Sans',sans-serif" }}>
-                      {p}
-                    </button>
-                  ))}
-                </div>
-              </div>
-              <div style={{ display:"grid", gridTemplateColumns:"repeat(auto-fill, minmax(220px, 1fr))", gap:10 }}>
-                {ideas.map((idea, i) => (
-                  <div key={i} className="ideacard"
-                    onClick={() => { setNewPost(p => ({...p, caption:idea.idea, type:idea.type})); setShowPostForm(true); }}>
-                    <div style={{ display:"flex", justifyContent:"space-between", marginBottom:8 }}>
-                      <span className="tag">{idea.type}</span>
-                      <span style={{ fontSize:11, color:`${c}88`, fontWeight:600 }}>{idea.pillar}</span>
-                    </div>
-                    <div style={{ fontSize:13, color:"#d1d5db", lineHeight:1.5 }}>{idea.idea}</div>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            {/* Caption starters */}
-            <div style={{ ...S.card, marginBottom:24 }}>
-              <div style={{ fontFamily:"'Fraunces',Georgia,serif", fontSize:16, color:"#f5f0e8", marginBottom:12 }}>Caption Starters for {niche.label}</div>
-              <div style={{ display:"grid", gap:8 }}>
-                {niche.captions.map((cap, i) => (
-                  <div key={i} style={{ background:"rgba(0,0,0,0.3)", border:`1px solid ${c}15`, borderRadius:10, padding:"12px 16px", fontSize:13, color:"#9ca3af", lineHeight:1.5, cursor:"pointer" }}
-                    onClick={() => { setNewPost(p=>({...p, caption:cap})); setShowPostForm(true); }}>
-                    {cap}
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            {/* Filters + posts */}
-            <div style={{ display:"flex", gap:12, marginBottom:16, flexWrap:"wrap" }}>
-              <input type="month" value={filterMonth} onChange={e=>setFilterMonth(e.target.value)} style={{ width:"auto", minWidth:160 }}/>
-              <select value={filterStatus} onChange={e=>setFilterStatus(e.target.value)} style={{ width:"auto", minWidth:130 }}>
-                <option>All</option>
-                {STATUS_OPTIONS.map(s=><option key={s}>{s}</option>)}
-              </select>
-            </div>
-
-            {filteredPosts.length===0 && (
-              <div style={{ textAlign:"center", color:"#4b5563", padding:"48px 0", fontSize:14 }}>
-                No posts yet — pick an idea above or add one manually
-              </div>
-            )}
-
-            {filteredPosts.map(p => (
-              <div key={p.id} className="postcard">
-                <div style={{ display:"flex", justifyContent:"space-between", flexWrap:"wrap", gap:8, marginBottom:10 }}>
-                  <div style={{ display:"flex", gap:8, flexWrap:"wrap", alignItems:"center" }}>
-                    <span style={{ fontSize:12, color:"#6b7280" }}>{p.date}</span>
-                    <span className="tag">{p.platform}</span>
-                    <span className="tag">{p.type}</span>
-                  </div>
-                  <div style={{ display:"flex", gap:8, alignItems:"center" }}>
-                    <select value={p.status}
-                      onChange={e => setPosts(posts.map(pp => pp.id===p.id ? {...pp,status:e.target.value}:pp))}
-                      style={{ width:"auto", minWidth:120, fontSize:12, padding:"4px 10px", color:STATUS_COLORS[p.status], background:STATUS_COLORS[p.status]+"18", border:`1px solid ${STATUS_COLORS[p.status]}44` }}>
-                      {STATUS_OPTIONS.map(s=><option key={s} style={{color:"#e8e6f0",background:"#111116"}}>{s}</option>)}
-                    </select>
-                    <button style={S.btn("danger","sm")} onClick={() => setPosts(posts.filter(pp=>pp.id!==p.id))}>✕</button>
-                  </div>
-                </div>
-                <div style={{ fontSize:14, color:"#e8e6f0", marginBottom:p.hashtags||p.notes?8:0 }}>{p.caption}</div>
-                {p.hashtags && <div style={{ fontSize:12, color:c+"88" }}>{p.hashtags}</div>}
-                {p.notes && <div style={{ fontSize:12, color:"#6b7280", marginTop:4, fontStyle:"italic" }}>📝 {p.notes}</div>}
-              </div>
-            ))}
-
-            {showPostForm && (
-              <div className="modal-bg">
-                <div className="modal">
-                  <div style={{ fontFamily:"'Fraunces',Georgia,serif", fontSize:20, color:"#f5f0e8", marginBottom:20 }}>Add New Post</div>
-                  <div style={{ display:"grid", gap:14 }}>
-                    <div><label style={S.label}>Date</label><input type="date" value={newPost.date} onChange={e=>setNewPost({...newPost,date:e.target.value})}/></div>
-                    <div className="g2">
-                      <div><label style={S.label}>Platform</label>
-                        <select value={newPost.platform} onChange={e=>setNewPost({...newPost,platform:e.target.value})}>
-                          {PLATFORMS.map(p=><option key={p}>{p}</option>)}
-                        </select>
-                      </div>
-                      <div><label style={S.label}>Format</label>
-                        <select value={newPost.type} onChange={e=>setNewPost({...newPost,type:e.target.value})}>
-                          {["Reel","Carousel","Static Post","Story","Video","Thread","Other"].map(t=><option key={t}>{t}</option>)}
-                        </select>
-                      </div>
-                    </div>
-                    <div><label style={S.label}>Caption / Idea</label><textarea value={newPost.caption} onChange={e=>setNewPost({...newPost,caption:e.target.value})} placeholder="Write your caption or post concept..."/></div>
-                    <div><label style={S.label}>Hashtags</label><input value={newPost.hashtags} onChange={e=>setNewPost({...newPost,hashtags:e.target.value})} placeholder="#yourniche #business"/></div>
-                    <div><label style={S.label}>Status</label>
-                      <select value={newPost.status} onChange={e=>setNewPost({...newPost,status:e.target.value})}>
-                        {STATUS_OPTIONS.map(s=><option key={s}>{s}</option>)}
-                      </select>
-                    </div>
-                    <div><label style={S.label}>Notes</label><input value={newPost.notes} onChange={e=>setNewPost({...newPost,notes:e.target.value})} placeholder="Reminders, visuals needed, etc."/></div>
-                    <div style={{ display:"flex", gap:10, justifyContent:"flex-end", marginTop:4 }}>
-                      <button style={S.btn("ghost")} onClick={()=>setShowPostForm(false)}>Cancel</button>
-                      <button style={S.primaryBtn} onClick={addPost}>Save Post</button>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            )}
-          </div>
-        )}
-
-        {/* ── FINANCE ── */}
-        {tab==="Finance" && (
-          <div>
-            <div style={{ display:"flex", justifyContent:"space-between", alignItems:"flex-start", marginBottom:24, flexWrap:"wrap", gap:12 }}>
-              <div>
-                <div className="section-title">Finance Tracker</div>
-                <div className="section-sub">Track every dollar in and out of your {niche.label.toLowerCase()} business</div>
-              </div>
-              <button style={S.primaryBtn} onClick={()=>setShowTxForm(true)}>+ Add Transaction</button>
-            </div>
-
-            <div className="g3" style={{ marginBottom:24 }}>
-              {[
-                { label:"Total Income", value:fmt(income), color:"#4ade80", border:"#4ade8033" },
-                { label:"Total Expenses", value:fmt(expense), color:"#f87171", border:"#f8717133" },
-                { label:"Net Profit", value:fmt(profit), color:profit>=0?"#4ade80":"#f87171", border:(profit>=0?"#4ade80":"#f87171")+"33" },
-              ].map(item=>(
-                <div key={item.label} style={{ ...S.card, border:`1px solid ${item.border}` }}>
-                  <div style={{ fontSize:11, color:item.color, fontWeight:700, textTransform:"uppercase", letterSpacing:"0.08em", marginBottom:8 }}>{item.label}</div>
-                  <div style={{ fontFamily:"'Fraunces',Georgia,serif", fontSize:28, fontWeight:700, color:item.color }}>{item.value}</div>
-                </div>
-              ))}
-            </div>
-
-            <div style={{ marginBottom:16 }}>
-              <input type="month" value={filterMonth} onChange={e=>setFilterMonth(e.target.value)} style={{ width:"auto", minWidth:160 }}/>
-            </div>
-
-            <div style={{ display:"grid", gridTemplateColumns:"80px 1fr 110px 90px 60px", gap:12, padding:"6px 16px", fontSize:10, color:c, fontWeight:700, textTransform:"uppercase", letterSpacing:"0.08em", marginBottom:8 }}>
-              <span>Date</span><span>Description</span><span>Category</span><span>Amount</span><span></span>
-            </div>
-
-            {filteredTx.length===0 && <div style={{ textAlign:"center", color:"#4b5563", padding:"32px 0", fontSize:14 }}>No transactions yet for this period</div>}
-
-            {filteredTx.map(t=>(
-              <div key={t.id} className="txrow">
-                <span style={{ fontSize:11, color:"#6b7280" }}>{t.date}</span>
-                <div>
-                  <div style={{ fontWeight:500, color:"#e8e6f0" }}>{t.description}</div>
-                  <span style={{ fontSize:10, color:"#6b7280" }}>{t.type}</span>
-                </div>
-                <span className="tag" style={{ fontSize:10 }}>{t.category}</span>
-                <span style={{ fontWeight:700, color:t.type==="Income"?"#4ade80":"#f87171" }}>
-                  {t.type==="Income"?"+":"-"}{fmt(t.amount)}
-                </span>
-                <button style={S.btn("danger","sm")} onClick={()=>setTransactions(transactions.filter(tt=>tt.id!==t.id))}>✕</button>
-              </div>
-            ))}
-
-            <div className="g2" style={{ marginTop:28 }}>
-              <div style={S.card}>
-                <div style={{ fontFamily:"'Fraunces',Georgia,serif", fontSize:15, color:"#4ade80", marginBottom:14 }}>Income by Category</div>
-                {niche.incomeCategories.map(cat=>{
-                  const total = transactions.filter(t=>t.type==="Income"&&t.category===cat).reduce((a,b)=>a+b.amount,0);
-                  if(!total) return null;
-                  return <div key={cat} style={{ display:"flex", justifyContent:"space-between", fontSize:13, padding:"8px 0", borderBottom:`1px solid ${c}10` }}><span style={{ color:"#9ca3af" }}>{cat}</span><span style={{ color:"#4ade80", fontWeight:600 }}>{fmt(total)}</span></div>;
-                })}
-                {transactions.filter(t=>t.type==="Income").length===0 && <div style={{ fontSize:12, color:"#4b5563" }}>No income recorded yet</div>}
-              </div>
-              <div style={S.card}>
-                <div style={{ fontFamily:"'Fraunces',Georgia,serif", fontSize:15, color:"#f87171", marginBottom:14 }}>Expenses by Category</div>
-                {niche.expenseCategories.map(cat=>{
-                  const total = transactions.filter(t=>t.type==="Expense"&&t.category===cat).reduce((a,b)=>a+b.amount,0);
-                  if(!total) return null;
-                  return <div key={cat} style={{ display:"flex", justifyContent:"space-between", fontSize:13, padding:"8px 0", borderBottom:`1px solid ${c}10` }}><span style={{ color:"#9ca3af" }}>{cat}</span><span style={{ color:"#f87171", fontWeight:600 }}>{fmt(total)}</span></div>;
-                })}
-                {transactions.filter(t=>t.type==="Expense").length===0 && <div style={{ fontSize:12, color:"#4b5563" }}>No expenses recorded yet</div>}
-              </div>
-            </div>
-
-            {showTxForm && (
-              <div className="modal-bg">
-                <div className="modal">
-                  <div style={{ fontFamily:"'Fraunces',Georgia,serif", fontSize:20, color:"#f5f0e8", marginBottom:20 }}>Add Transaction</div>
-                  <div style={{ display:"grid", gap:14 }}>
-                    <div><label style={S.label}>Date</label><input type="date" value={newTx.date} onChange={e=>setNewTx({...newTx,date:e.target.value})}/></div>
-                    <div className="g2">
-                      <div><label style={S.label}>Type</label>
-                        <select value={newTx.type} onChange={e=>setNewTx({...newTx,type:e.target.value,category:(e.target.value==="Income"?niche.incomeCategories:niche.expenseCategories)[0]})}>
-                          <option>Income</option><option>Expense</option>
-                        </select>
-                      </div>
-                      <div><label style={S.label}>Category</label>
-                        <select value={newTx.category} onChange={e=>setNewTx({...newTx,category:e.target.value})}>
-                          {(newTx.type==="Income"?niche.incomeCategories:niche.expenseCategories).map(c=><option key={c}>{c}</option>)}
-                        </select>
-                      </div>
-                    </div>
-                    <div><label style={S.label}>Description</label><input value={newTx.description} onChange={e=>setNewTx({...newTx,description:e.target.value})} placeholder="What was this for?"/></div>
-                    <div><label style={S.label}>Amount ($)</label><input type="number" value={newTx.amount} onChange={e=>setNewTx({...newTx,amount:e.target.value})} placeholder="0.00" min="0" step="0.01"/></div>
-                    <div style={{ display:"flex", gap:10, justifyContent:"flex-end", marginTop:4 }}>
-                      <button style={S.btn("ghost")} onClick={()=>setShowTxForm(false)}>Cancel</button>
-                      <button style={S.primaryBtn} onClick={addTx}>Save</button>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            )}
-          </div>
-        )}
-
-        {/* ── BRAND HUB ── */}
-        {tab==="Brand Hub" && (
-          <div>
-            <div style={{ display:"flex", justifyContent:"space-between", alignItems:"flex-start", marginBottom:24, flexWrap:"wrap", gap:12 }}>
-              <div>
-                <div className="section-title">Brand Hub</div>
-                <div className="section-sub">Define your brand so every piece of content feels intentional</div>
-              </div>
-              {!editingBrand
-                ? <button style={S.primaryBtn} onClick={()=>{setBrandDraft(brand);setEditingBrand(true);}}>Edit Brand</button>
-                : <div style={{ display:"flex", gap:10 }}>
-                    <button style={S.btn("ghost")} onClick={()=>setEditingBrand(false)}>Cancel</button>
-                    <button style={S.primaryBtn} onClick={()=>{setBrand(brandDraft);setEditingBrand(false);}}>Save</button>
-                  </div>
-              }
-            </div>
-
-            <div className="g2" style={{ marginBottom:20 }}>
-              <div style={S.card}>
-                <div style={{ fontFamily:"'Fraunces',Georgia,serif", fontSize:16, color:c, marginBottom:18 }}>Business Identity</div>
-                {!editingBrand ? (
-                  <div style={{ display:"grid", gap:16 }}>
-                    {[["Business Name", brand.name||"Not set"],["Tagline",brand.tagline||"Not set"],["Brand Voice",brand.voice||"Not set"],["Brand Colors",brand.colors||"Not set"]].map(([l,v])=>(
-                      <div key={l}><label style={S.label}>{l}</label><div style={{ fontSize:14, color:"#d1d5db" }}>{v}</div></div>
-                    ))}
-                  </div>
-                ) : (
-                  <div style={{ display:"grid", gap:14 }}>
-                    {[["name","Business Name"],["tagline","Your tagline / slogan"],["voice","Brand voice (e.g. warm, bold, expert)"],["colors","Brand colours"]].map(([k,ph])=>(
-                      <div key={k}><label style={S.label}>{ph}</label><input value={brandDraft[k]} onChange={e=>setBrandDraft({...brandDraft,[k]:e.target.value})} placeholder={ph}/></div>
-                    ))}
+                {goalSet&&(
+                  <div style={{textAlign:"right",background:"#f9fafb",border:"1px solid #e5e7eb",borderRadius:12,padding:"12px 16px"}}>
+                    <div style={{fontSize:10,color:"#6b7280",fontWeight:700,textTransform:"uppercase",letterSpacing:"0.06em",marginBottom:4}}>Monthly Goal</div>
+                    <div style={{fontFamily:"'Playfair Display',Georgia,serif",fontSize:20,color:income>=goal?G:AC,fontWeight:700}}>{pct(income,goal)}%</div>
+                    <div style={{width:110,height:4,background:"#f3f4f6",borderRadius:2,marginTop:8,overflow:"hidden"}}><div style={{height:"100%",width:pct(income,goal)+"%",background:income>=goal?G:AC,borderRadius:2,transition:"width 0.4s"}}/></div>
+                    <div style={{fontSize:11,color:"#6b7280",marginTop:4}}>{money(income)} of {money(goal)}</div>
                   </div>
                 )}
               </div>
-              <div style={{ display:"grid", gap:16 }}>
-                <div style={S.card}>
-                  <div style={{ fontFamily:"'Fraunces',Georgia,serif", fontSize:15, color:c, marginBottom:12 }}>Target Audience</div>
-                  {!editingBrand ? <div style={{ fontSize:14, color:"#d1d5db" }}>{brand.audience||"Not set"}</div>
-                    : <textarea value={brandDraft.audience} onChange={e=>setBrandDraft({...brandDraft,audience:e.target.value})} placeholder="Who is your ideal customer? Age, lifestyle, pain points..."/>}
+            </div>
+            <div className="g4" style={{marginBottom:24}}>
+              {[{l:"Total Income",v:money(income),c:G},{l:"Total Expenses",v:money(expense),c:"#dc2626"},{l:"Net Profit",v:money(profit),c:profit>=0?G:"#dc2626"},{l:"Content Posts",v:posts.length,c:AC,s:`${posts.filter(p=>p.status==="Posted").length} posted`}].map(item=>(
+                <div key={item.l} className="sc" style={{borderTop:`3px solid ${item.c}`}}>
+                  <div style={{fontSize:10,color:item.c,fontWeight:700,textTransform:"uppercase",letterSpacing:"0.06em",marginBottom:8}}>{item.l}</div>
+                  <div style={{fontFamily:"'Playfair Display',Georgia,serif",fontSize:22,fontWeight:700,color:item.c}}>{item.v}</div>
+                  {item.s&&<div style={{fontSize:11,color:"#9ca3af",marginTop:4}}>{item.s}</div>}
                 </div>
-                <div style={S.card}>
-                  <div style={{ fontFamily:"'Fraunces',Georgia,serif", fontSize:15, color:c, marginBottom:12 }}>Mission Statement</div>
-                  {!editingBrand ? <div style={{ fontSize:14, color:"#d1d5db" }}>{brand.mission||"Not set"}</div>
-                    : <textarea value={brandDraft.mission} onChange={e=>setBrandDraft({...brandDraft,mission:e.target.value})} placeholder="Why does your business exist? What change do you create?"/>}
-                </div>
-                <div style={S.card}>
-                  <div style={{ fontFamily:"'Fraunces',Georgia,serif", fontSize:15, color:c, marginBottom:12 }}>Business Goals</div>
-                  {!editingBrand ? <div style={{ fontSize:14, color:"#d1d5db", whiteSpace:"pre-line" }}>{brand.goals||"Not set"}</div>
-                    : <textarea value={brandDraft.goals} onChange={e=>setBrandDraft({...brandDraft,goals:e.target.value})} placeholder="List your goals for this quarter or year..."/>}
-                </div>
+              ))}
+            </div>
+            <div className="g2" style={{marginBottom:24}}>
+              <div style={card}>
+                <div style={{fontFamily:"'Playfair Display',Georgia,serif",fontSize:16,fontWeight:700,color:"#111",marginBottom:16}}>Content Pipeline</div>
+                {STAT.map(s=>{const c=posts.filter(p=>p.status===s).length;const p=posts.length?Math.round(c/posts.length*100):0;return(<div key={s} style={{marginBottom:14}}><div style={{display:"flex",justifyContent:"space-between",fontSize:12,marginBottom:5}}><span style={{color:SC[s],fontWeight:700}}>{s}</span><span style={{color:"#9ca3af"}}>{c}</span></div><div style={{height:4,background:"#f3f4f6",borderRadius:2,overflow:"hidden"}}><div style={{height:"100%",width:p+"%",background:SC[s],borderRadius:2}}/></div></div>);})}
+                {posts.length===0&&<div style={{fontSize:12,color:"#9ca3af"}}>No posts yet — head to Content to start planning</div>}
+              </div>
+              <div style={card}>
+                <div style={{fontFamily:"'Playfair Display',Georgia,serif",fontSize:16,fontWeight:700,color:"#111",marginBottom:16}}>Content Pillars</div>
+                {niche.pillars.map(p=>(<div key={p.n} style={{display:"flex",gap:10,padding:"9px 0",borderBottom:"1px solid #f9fafb"}}><div style={{width:6,height:6,borderRadius:"50%",background:AC,marginTop:6,flexShrink:0}}/><div><div style={{fontSize:13,fontWeight:700,color:"#111",marginBottom:1}}>{p.n}</div><div style={{fontSize:12,color:"#6b7280"}}>{p.d}</div></div></div>))}
               </div>
             </div>
-
-            <div style={S.card}>
-              <div style={{ fontFamily:"'Fraunces',Georgia,serif", fontSize:16, color:"#f5f0e8", marginBottom:16 }}>Content Pillars for {niche.label}</div>
-              <div style={{ display:"grid", gridTemplateColumns:"repeat(auto-fill, minmax(180px,1fr))", gap:12 }}>
-                {niche.pillars.map(p=>(
-                  <div key={p.name} style={{ background:`${c}0a`, border:`1px solid ${c}22`, borderRadius:12, padding:16 }}>
-                    <div style={{ fontSize:22, marginBottom:8 }}>{p.emoji}</div>
-                    <div style={{ fontSize:13, fontWeight:600, color:c, marginBottom:6 }}>{p.name}</div>
-                    <div style={{ fontSize:12, color:"#6b7280", lineHeight:1.5 }}>{p.desc}</div>
-                  </div>
-                ))}
-              </div>
+            <div style={{display:"flex",gap:10,flexWrap:"wrap"}}>
+              <button style={PBtn} onClick={()=>{setTab("Content");setShowPF(true);}}>+ Add Content</button>
+              <button style={GBtn} onClick={()=>{setTab("Finance");setFtab("Transactions");setShowTF(true);}}>+ Add Transaction</button>
+              <button style={GBtn} onClick={()=>{setTab("Finance");setFtab("Calculator");}}>Profit Calculator</button>
+              <button style={GBtn} onClick={()=>setTab("Guide")}>Read the Guide</button>
             </div>
           </div>
         )}
 
-        {/* ── GUIDE ── */}
-        {tab==="Guide" && (
+        {/* BRAND */}
+        {tab==="Brand"&&(
           <div>
-            <div className="section-title">How to Use BizKit</div>
-            <div className="section-sub">A plain-English guide to getting the most out of every section</div>
+            <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:24,flexWrap:"wrap",gap:12}}>
+              <div><div style={ST}>Brand Hub</div><div style={SS}>Your identity, pillars, monthly goal, and setup checklist</div></div>
+              <button style={GBtn} onClick={()=>setProfile(p=>({...p,business_name:""}))}>Edit Brand</button>
+            </div>
+            <div className="g2" style={{marginBottom:20}}>
+              <div style={card}>
+                <div style={{fontFamily:"'Playfair Display',Georgia,serif",fontSize:16,fontWeight:700,color:"#111",marginBottom:16}}>Business Identity</div>
+                {[["Business Name",profile.business_name],["Tagline",profile.tagline||"—"],["Niche",niche.label],["Audience",profile.audience||"—"]].map(([l,v])=>(<div key={l} style={{marginBottom:14}}><label style={lbl}>{l}</label><div style={{fontSize:14,color:"#111",fontWeight:500}}>{v}</div></div>))}
+                <div><label style={lbl}>Brand Colour</label><div style={{display:"flex",alignItems:"center",gap:10}}><div style={{width:28,height:28,borderRadius:8,background:AC,border:"1px solid #e5e7eb"}}/><span style={{fontSize:13,color:"#374151",fontWeight:600}}>{AC}</span></div></div>
+              </div>
+              <div style={{display:"grid",gap:16}}>
+                <div style={card}>
+                  <div style={{fontFamily:"'Playfair Display',Georgia,serif",fontSize:15,fontWeight:700,color:"#111",marginBottom:12}}>Monthly Income Goal</div>
+                  {!goalSet?(
+                    <div><div style={{fontSize:13,color:"#6b7280",marginBottom:10,lineHeight:1.5}}>Set a monthly income target and track your progress across the app in real time.</div><div style={{display:"flex",gap:8}}><input type="number" value={goalInput} onChange={e=>setGoalInput(e.target.value)} placeholder="e.g. 5000" style={{flex:1}}/><button style={PBtn} onClick={async()=>{if(goalInput){setGoal(Number(goalInput));setGoalSet(true);setGoalInput("");await sb.from("profiles").update({monthly_goal:Number(goalInput),goal_set:true}).eq("id",user.id);}}}>Set</button></div></div>
+                  ):(
+                    <div><div style={{fontFamily:"'Playfair Display',Georgia,serif",fontSize:24,color:G,marginBottom:8,fontWeight:700}}>{money(goal)}</div><div style={{height:6,background:"#f3f4f6",borderRadius:3,marginBottom:8,overflow:"hidden"}}><div style={{height:"100%",width:pct(income,goal)+"%",background:income>=goal?G:AC,borderRadius:3,transition:"width 0.5s"}}/></div><div style={{fontSize:13,color:"#374151",marginBottom:10,fontWeight:600}}>{money(income)} earned — {pct(income,goal)}%</div><button style={DBtn} onClick={async()=>{setGoalSet(false);setGoal(0);await sb.from("profiles").update({monthly_goal:0,goal_set:false}).eq("id",user.id);}}>Remove goal</button></div>
+                  )}
+                </div>
+                <div style={card}>
+                  <div style={{fontFamily:"'Playfair Display',Georgia,serif",fontSize:15,fontWeight:700,color:"#111",marginBottom:12}}>Content Pillars</div>
+                  {niche.pillars.map(p=>(<div key={p.n} style={{display:"flex",gap:10,padding:"7px 0",borderBottom:"1px solid #f9fafb"}}><div style={{width:6,height:6,borderRadius:"50%",background:AC,marginTop:5,flexShrink:0}}/><div><div style={{fontSize:13,fontWeight:700,color:"#111"}}>{p.n}</div><div style={{fontSize:11,color:"#6b7280"}}>{p.d}</div></div></div>))}
+                </div>
+              </div>
+            </div>
+            {/* Checklist */}
+            <div style={{...card,marginBottom:20}}>
+              <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:16,flexWrap:"wrap",gap:10}}>
+                <div><div style={{fontFamily:"'Playfair Display',Georgia,serif",fontSize:16,fontWeight:700,color:"#111"}}>{niche.label} — Setup Checklist</div><div style={{fontSize:12,color:"#6b7280",marginTop:2}}>{checkDone} of {allChecks.length} complete</div></div>
+                <div style={{fontFamily:"'Playfair Display',Georgia,serif",fontSize:22,color:checkDone===allChecks.length&&allChecks.length>0?G:AC,fontWeight:700}}>{pct(checkDone,allChecks.length)}%</div>
+              </div>
+              <div style={{height:6,background:"#f3f4f6",borderRadius:3,marginBottom:20,overflow:"hidden"}}><div style={{height:"100%",width:pct(checkDone,allChecks.length)+"%",background:checkDone===allChecks.length&&allChecks.length>0?G:AC,borderRadius:3,transition:"width 0.4s"}}/></div>
+              {allChecks.map(item=>(
+                <div key={item.key} onClick={()=>toggleCheck(item.key,item.custom,item.label)} style={{display:"flex",alignItems:"center",gap:12,padding:"12px 0",borderBottom:"1px solid #f9fafb",cursor:"pointer"}}>
+                  <div style={{width:20,height:20,borderRadius:6,border:`1.5px solid ${checks[item.key]?"#111":"#d1d5db"}`,background:checks[item.key]?"#111":"transparent",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0,transition:"all 0.15s"}}>{checks[item.key]&&<svg width="10" height="8" viewBox="0 0 10 8" fill="none"><path d="M1 4l3 3 5-6" stroke="#fff" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>}</div>
+                  <div style={{flex:1,fontSize:14,color:checks[item.key]?"#9ca3af":"#111",textDecoration:checks[item.key]?"line-through":"none",transition:"all 0.15s",fontWeight:checks[item.key]?400:500}}>{item.label}</div>
+                  {item.custom&&<button style={DBtn} onClick={e=>{e.stopPropagation();removeCustom(item.label);}}>Remove</button>}
+                </div>
+              ))}
+              <div style={{display:"flex",gap:10,marginTop:16}}><input value={newItem} onChange={e=>setNewItem(e.target.value)} placeholder="Add your own checklist item..." onKeyDown={e=>e.key==="Enter"&&addCustom()} style={{flex:1}}/><button style={PBtn} onClick={addCustom}>Add</button></div>
+              {checkDone===allChecks.length&&allChecks.length>0&&<div style={{textAlign:"center",padding:"20px 0",color:G,fontSize:14,fontFamily:"'Playfair Display',Georgia,serif",fontWeight:700}}>Setup complete — your business is ready to go.</div>}
+            </div>
+            {/* Support */}
+            <div style={{...card,background:"#f9fafb"}}>
+              <div style={{fontFamily:"'Playfair Display',Georgia,serif",fontSize:15,fontWeight:700,color:"#111",marginBottom:8}}>Need help or have feedback?</div>
+              <div style={{fontSize:13,color:"#6b7280",lineHeight:1.6,marginBottom:14}}>Reach out any time — bugs, feature suggestions, or questions about using BizKit Pro.</div>
+              <a href="mailto:support@bizkitpro.app" style={{display:"inline-block",padding:"9px 20px",background:"#111",color:"#fff",borderRadius:10,fontSize:13,fontWeight:700,textDecoration:"none"}}>Email Support</a>
+            </div>
+          </div>
+        )}
 
+        {/* CONTENT */}
+        {tab==="Content"&&(
+          <div>
+            <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:24,flexWrap:"wrap",gap:12}}>
+              <div><div style={ST}>Content Planner</div><div style={SS}>Plan, create, track, and analyse your {niche.label.toLowerCase()} content</div></div>
+              <div style={{display:"flex",gap:8}}><button style={GBtn} onClick={()=>setShowAF(true)}>Log Analytics</button><button style={PBtn} onClick={()=>setShowPF(true)}>+ Add Post</button></div>
+            </div>
+            {/* Ideas */}
+            <div style={{...card,marginBottom:20,background:"#f9fafb"}}>
+              <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:14,flexWrap:"wrap",gap:10}}>
+                <div><div style={{fontFamily:"'Playfair Display',Georgia,serif",fontSize:16,fontWeight:700,color:"#111"}}>Content Ideas — {niche.label}</div><div style={{fontSize:12,color:"#6b7280",marginTop:2}}>Click any idea to add it to your planner</div></div>
+                <div style={{display:"flex",gap:6,flexWrap:"wrap"}}>{["All",...pillars].map(p=><button key={p} onClick={()=>setIdeaF(p)} className="pill" style={{background:ideaF===p?"#111":"#fff",color:ideaF===p?"#fff":"#6b7280",border:ideaF===p?"1px solid #111":"1px solid #e5e7eb"}}>{p}</button>)}</div>
+              </div>
+              <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(200px,1fr))",gap:10}}>
+                {ideas.map((idea,i)=>(
+                  <div key={i} className="idea" onClick={()=>{setNp(p=>({...p,caption:idea.i,type:idea.t}));setShowPF(true);}}>
+                    <div style={{display:"flex",justifyContent:"space-between",marginBottom:8,gap:6}}><span className="tag">{idea.t}</span><span style={{fontSize:11,color:"#9ca3af",fontWeight:600}}>{idea.p}</span></div>
+                    <div style={{fontSize:13,color:"#374151",lineHeight:1.5,fontWeight:500}}>{idea.i}</div>
+                  </div>
+                ))}
+              </div>
+            </div>
+            {/* Captions */}
+            <div style={{...card,marginBottom:20}}>
+              <div style={{fontFamily:"'Playfair Display',Georgia,serif",fontSize:15,fontWeight:700,color:"#111",marginBottom:12}}>Caption Starters</div>
+              <div style={{display:"grid",gap:8}}>
+                {niche.caps.map((cap,i)=>(
+                  <div key={i} onClick={()=>{setNp(p=>({...p,caption:cap}));setShowPF(true);}} style={{background:"#f9fafb",border:"1px solid #e5e7eb",borderRadius:10,padding:"12px 16px",fontSize:13,color:"#374151",lineHeight:1.6,cursor:"pointer",fontWeight:500,transition:"border-color 0.15s"}} onMouseEnter={e=>e.currentTarget.style.borderColor="#374151"} onMouseLeave={e=>e.currentTarget.style.borderColor="#e5e7eb"}>{cap}</div>
+                ))}
+              </div>
+            </div>
+            {/* Analytics display */}
+            {analytics.length>0&&(
+              <div style={{...card,marginBottom:20}}>
+                <div style={{fontFamily:"'Playfair Display',Georgia,serif",fontSize:16,fontWeight:700,color:"#111",marginBottom:16}}>Analytics Overview</div>
+                <div className="g3" style={{marginBottom:16}}>
+                  {[{l:"Avg Views",v:Math.round(analytics.reduce((a,b)=>a+(Number(b.views)||0),0)/analytics.length).toLocaleString(),c:AC},{l:"Avg Saves",v:Math.round(analytics.reduce((a,b)=>a+(Number(b.saves)||0),0)/analytics.length).toLocaleString(),c:G},{l:"Avg Shares",v:Math.round(analytics.reduce((a,b)=>a+(Number(b.shares)||0),0)/analytics.length).toLocaleString(),c:"#f59e0b"}].map(item=>(
+                    <div key={item.l} style={{background:"#f9fafb",border:"1px solid #e5e7eb",borderRadius:12,padding:16,borderTop:`3px solid ${item.c}`}}>
+                      <div style={{fontSize:10,color:item.c,fontWeight:700,textTransform:"uppercase",letterSpacing:"0.06em",marginBottom:6}}>{item.l}</div>
+                      <div style={{fontFamily:"'Playfair Display',Georgia,serif",fontSize:22,fontWeight:700,color:item.c}}>{item.v}</div>
+                    </div>
+                  ))}
+                </div>
+                {analytics.map(a=>(
+                  <div key={a.id} style={{display:"flex",gap:12,alignItems:"flex-start",padding:"10px 0",borderBottom:"1px solid #f9fafb",flexWrap:"wrap"}}>
+                    <div style={{flex:1}}><div style={{fontSize:13,color:"#111",marginBottom:4,fontWeight:600}}>{a.caption}</div><div style={{display:"flex",gap:10,flexWrap:"wrap",fontSize:11,color:"#6b7280",fontWeight:500}}><span className="tag">{a.platform}</span>{a.date&&<span>{a.date}</span>}{a.views>0&&<span>Views: {Number(a.views).toLocaleString()}</span>}{a.reach>0&&<span>Reach: {Number(a.reach).toLocaleString()}</span>}{a.saves>0&&<span>Saves: {Number(a.saves).toLocaleString()}</span>}{a.shares>0&&<span>Shares: {Number(a.shares).toLocaleString()}</span>}{a.likes>0&&<span>Likes: {Number(a.likes).toLocaleString()}</span>}{a.comments>0&&<span>Comments: {Number(a.comments).toLocaleString()}</span>}</div></div>
+                    <button style={DBtn} onClick={()=>delAnalytic(a.id)}>Remove</button>
+                  </div>
+                ))}
+              </div>
+            )}
+            {/* Filters */}
+            <div style={{display:"flex",gap:12,marginBottom:16,flexWrap:"wrap"}}><input type="month" value={fMonth} onChange={e=>setFMonth(e.target.value)} style={{width:"auto",minWidth:160}}/><select value={fStatus} onChange={e=>setFStatus(e.target.value)} style={{width:"auto",minWidth:130}}><option>All</option>{STAT.map(s=><option key={s}>{s}</option>)}</select></div>
+            {fposts.length===0&&<div style={{textAlign:"center",color:"#9ca3af",padding:"40px 0",fontSize:14}}>No posts yet — click an idea above or add one manually</div>}
+            {fposts.map(p=>(
+              <div key={p.id} className="row">
+                <div style={{display:"flex",justifyContent:"space-between",flexWrap:"wrap",gap:8,marginBottom:10}}>
+                  <div style={{display:"flex",gap:8,flexWrap:"wrap",alignItems:"center"}}><span style={{fontSize:12,color:"#9ca3af"}}>{p.date}</span><span className="tag">{p.platform}</span><span className="tag">{p.type}</span></div>
+                  <div style={{display:"flex",gap:8,alignItems:"center"}}><select value={p.status} onChange={e=>updStat(p.id,e.target.value)} style={{width:"auto",minWidth:120,fontSize:12,padding:"4px 10px",color:SC[p.status],background:`${SC[p.status]}14`,border:`1.5px solid ${SC[p.status]}40`,fontWeight:700}}>{STAT.map(s=><option key={s}>{s}</option>)}</select><button style={DBtn} onClick={()=>delPost(p.id)}>Remove</button></div>
+                </div>
+                <div style={{fontSize:14,color:"#111",fontWeight:500,lineHeight:1.5,marginBottom:p.hashtags||p.notes?8:0}}>{p.caption}</div>
+                {p.hashtags&&<div style={{fontSize:12,color:AC,fontWeight:600,marginBottom:p.notes?4:0}}>{p.hashtags}</div>}
+                {p.notes&&<div style={{fontSize:12,color:"#6b7280",fontStyle:"italic"}}>Note: {p.notes}</div>}
+              </div>
+            ))}
+            {showAF&&(<div className="mo"><div className="md">
+              <div style={{fontFamily:"'Playfair Display',Georgia,serif",fontSize:20,color:"#111",marginBottom:6,fontWeight:700}}>Log Post Analytics</div>
+              <div style={{fontSize:12,color:"#374151",marginBottom:16,padding:"12px 14px",background:"#f9fafb",borderRadius:10,border:"1px solid #e5e7eb",lineHeight:1.8,fontWeight:500}}><strong style={{color:"#111"}}>How to find your stats:</strong><br/>Instagram: {niche.hints.ig}<br/>TikTok: {niche.hints.tt}<br/>LinkedIn: {niche.hints.li}</div>
+              <div style={{display:"grid",gap:14}}>
+                <div className="g2"><div><label style={lbl}>Date</label><input type="date" value={na.date} onChange={e=>setNa({...na,date:e.target.value})}/></div><div><label style={lbl}>Platform</label><select value={na.platform} onChange={e=>setNa({...na,platform:e.target.value})}>{PLATS.map(p=><option key={p}>{p}</option>)}</select></div></div>
+                <div><label style={lbl}>Post description</label><input value={na.caption} onChange={e=>setNa({...na,caption:e.target.value})} placeholder="What was this post about?"/></div>
+                <div className="g3"><div><label style={lbl}>Views</label><input type="number" value={na.views} onChange={e=>setNa({...na,views:e.target.value})} placeholder="0"/></div><div><label style={lbl}>Reach</label><input type="number" value={na.reach} onChange={e=>setNa({...na,reach:e.target.value})} placeholder="0"/></div><div><label style={lbl}>Likes</label><input type="number" value={na.likes} onChange={e=>setNa({...na,likes:e.target.value})} placeholder="0"/></div></div>
+                <div className="g3"><div><label style={lbl}>Saves</label><input type="number" value={na.saves} onChange={e=>setNa({...na,saves:e.target.value})} placeholder="0"/></div><div><label style={lbl}>Shares</label><input type="number" value={na.shares} onChange={e=>setNa({...na,shares:e.target.value})} placeholder="0"/></div><div><label style={lbl}>Comments</label><input type="number" value={na.comments} onChange={e=>setNa({...na,comments:e.target.value})} placeholder="0"/></div></div>
+                <div style={{display:"flex",gap:10,justifyContent:"flex-end"}}><button style={GBtn} onClick={()=>setShowAF(false)}>Cancel</button><button style={PBtn} onClick={addAnalytic}>Save Analytics</button></div>
+              </div>
+            </div></div>)}
+            {showPF&&(<div className="mo"><div className="md">
+              <div style={{fontFamily:"'Playfair Display',Georgia,serif",fontSize:20,color:"#111",marginBottom:20,fontWeight:700}}>Add New Post</div>
+              <div style={{display:"grid",gap:14}}>
+                <div><label style={lbl}>Date</label><input type="date" value={np.date} onChange={e=>setNp({...np,date:e.target.value})}/></div>
+                <div className="g2"><div><label style={lbl}>Platform</label><select value={np.platform} onChange={e=>setNp({...np,platform:e.target.value})}>{PLATS.map(p=><option key={p}>{p}</option>)}</select></div><div><label style={lbl}>Format</label><select value={np.type} onChange={e=>setNp({...np,type:e.target.value})}>{["Reel","Carousel","Static Post","Story","Video","Thread","Other"].map(t=><option key={t}>{t}</option>)}</select></div></div>
+                <div><label style={lbl}>Caption or Idea</label><textarea value={np.caption} onChange={e=>setNp({...np,caption:e.target.value})} placeholder="Write your caption or post concept..."/></div>
+                <div><label style={lbl}>Hashtags</label><input value={np.hashtags} onChange={e=>setNp({...np,hashtags:e.target.value})} placeholder="#yourniche #smallbusiness"/></div>
+                <div><label style={lbl}>Status</label><select value={np.status} onChange={e=>setNp({...np,status:e.target.value})}>{STAT.map(s=><option key={s}>{s}</option>)}</select></div>
+                <div><label style={lbl}>Notes</label><input value={np.notes} onChange={e=>setNp({...np,notes:e.target.value})} placeholder="Reminders, visuals needed, etc."/></div>
+                <div style={{display:"flex",gap:10,justifyContent:"flex-end"}}><button style={GBtn} onClick={()=>setShowPF(false)}>Cancel</button><button style={PBtn} onClick={addPost}>Save Post</button></div>
+              </div>
+            </div></div>)}
+          </div>
+        )}
+
+        {/* FINANCE */}
+        {tab==="Finance"&&(
+          <div>
+            <div style={{marginBottom:20}}>
+              <div style={ST}>Finance</div>
+              <div style={SS}>Track money, customers, vendors, and pricing for {profile.business_name}</div>
+              <div style={{display:"flex",gap:8,flexWrap:"wrap"}}>{FTABS.map(ft=><button key={ft} className="fsb" onClick={()=>setFtab(ft)} style={{background:ftab===ft?"#111":"#fff",color:ftab===ft?"#fff":"#6b7280",border:ftab===ft?"1px solid #111":"1px solid #e5e7eb",fontWeight:ftab===ft?700:500}}>{ft}</button>)}</div>
+            </div>
+
+            {ftab==="Overview"&&(
+              <div>
+                {goalSet&&(<div style={{...card,marginBottom:20}}><div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:10,flexWrap:"wrap",gap:8}}><div style={{fontSize:14,fontWeight:700,color:"#111"}}>Monthly Income Goal</div><div style={{fontSize:14,color:income>=goal?G:AC,fontWeight:700}}>{money(income)} of {money(goal)} — {pct(income,goal)}%</div></div><div style={{height:8,background:"#f3f4f6",borderRadius:4,overflow:"hidden"}}><div style={{height:"100%",width:pct(income,goal)+"%",background:income>=goal?G:AC,borderRadius:4,transition:"width 0.5s"}}/></div></div>)}
+                <div className="g3" style={{marginBottom:20}}>{[{l:"Total Income",v:money(income),c:G},{l:"Total Expenses",v:money(expense),c:"#dc2626"},{l:"Net Profit",v:money(profit),c:profit>=0?G:"#dc2626"}].map(item=>(<div key={item.l} style={{...card,borderTop:`3px solid ${item.c}`}}><div style={{fontSize:10,color:item.c,fontWeight:700,textTransform:"uppercase",letterSpacing:"0.06em",marginBottom:8}}>{item.l}</div><div style={{fontFamily:"'Playfair Display',Georgia,serif",fontSize:24,fontWeight:700,color:item.c}}>{item.v}</div></div>))}</div>
+                <div className="g2">
+                  <div style={card}><div style={{fontFamily:"'Playfair Display',Georgia,serif",fontSize:15,fontWeight:700,color:G,marginBottom:14}}>Income by Category</div>{niche.inc.map(cat=>{const total=txs.filter(t=>t.type==="Income"&&t.category===cat).reduce((a,b)=>a+Number(b.amount),0);if(!total)return null;return<div key={cat} style={{display:"flex",justifyContent:"space-between",fontSize:13,padding:"8px 0",borderBottom:"1px solid #f9fafb",fontWeight:500}}><span style={{color:"#374151"}}>{cat}</span><span style={{color:G,fontWeight:700}}>{money(total)}</span></div>;})}{txs.filter(t=>t.type==="Income").length===0&&<div style={{fontSize:12,color:"#9ca3af"}}>No income recorded yet</div>}</div>
+                  <div style={card}><div style={{fontFamily:"'Playfair Display',Georgia,serif",fontSize:15,fontWeight:700,color:"#dc2626",marginBottom:14}}>Expenses by Category</div>{niche.exp.map(cat=>{const total=txs.filter(t=>t.type==="Expense"&&t.category===cat).reduce((a,b)=>a+Number(b.amount),0);if(!total)return null;return<div key={cat} style={{display:"flex",justifyContent:"space-between",fontSize:13,padding:"8px 0",borderBottom:"1px solid #f9fafb",fontWeight:500}}><span style={{color:"#374151"}}>{cat}</span><span style={{color:"#dc2626",fontWeight:700}}>{money(total)}</span></div>;})}{txs.filter(t=>t.type==="Expense").length===0&&<div style={{fontSize:12,color:"#9ca3af"}}>No expenses recorded yet</div>}</div>
+                </div>
+              </div>
+            )}
+
+            {ftab==="Transactions"&&(
+              <div>
+                <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:16,flexWrap:"wrap",gap:12}}><input type="month" value={fMonth} onChange={e=>setFMonth(e.target.value)} style={{width:"auto",minWidth:160}}/><button style={PBtn} onClick={()=>setShowTF(true)}>+ Add Transaction</button></div>
+                <div style={{display:"grid",gridTemplateColumns:"80px 1fr 110px 90px 72px",gap:12,padding:"6px 16px",fontSize:10,color:"#9ca3af",fontWeight:700,textTransform:"uppercase",letterSpacing:"0.06em",marginBottom:8}}><span>Date</span><span>Description</span><span>Category</span><span>Amount</span><span></span></div>
+                {ftxs.length===0&&<div style={{textAlign:"center",color:"#9ca3af",padding:"32px 0",fontSize:14}}>No transactions for this period</div>}
+                {ftxs.map(t=>(<div key={t.id} style={{display:"grid",gridTemplateColumns:"80px 1fr 110px 90px 72px",gap:12,alignItems:"center",padding:"12px 16px",background:"#fff",border:"1px solid #e5e7eb",borderRadius:10,marginBottom:8,fontSize:13}}><span style={{fontSize:11,color:"#9ca3af"}}>{t.date}</span><div><div style={{fontWeight:600,color:"#111"}}>{t.description}</div><span style={{fontSize:10,color:"#9ca3af"}}>{t.type}</span></div><span className="tag">{t.category}</span><span style={{fontWeight:700,color:t.type==="Income"?G:"#dc2626"}}>{t.type==="Income"?"+":"-"}{money(t.amount)}</span><button style={DBtn} onClick={()=>delTx(t.id)}>Remove</button></div>))}
+                {showTF&&(<div className="mo"><div className="md">
+                  <div style={{fontFamily:"'Playfair Display',Georgia,serif",fontSize:20,color:"#111",marginBottom:20,fontWeight:700}}>Add Transaction</div>
+                  <div style={{display:"grid",gap:14}}>
+                    <div><label style={lbl}>Date</label><input type="date" value={nt.date} onChange={e=>setNt({...nt,date:e.target.value})}/></div>
+                    <div className="g2"><div><label style={lbl}>Type</label><select value={nt.type} onChange={e=>setNt({...nt,type:e.target.value,category:(e.target.value==="Income"?niche.inc:niche.exp)[0]})}><option>Income</option><option>Expense</option></select></div><div><label style={lbl}>Category</label><select value={nt.category} onChange={e=>setNt({...nt,category:e.target.value})}>{(nt.type==="Income"?niche.inc:niche.exp).map(c=><option key={c}>{c}</option>)}</select></div></div>
+                    <div><label style={lbl}>Description</label><input value={nt.description} onChange={e=>setNt({...nt,description:e.target.value})} placeholder="What was this for?"/></div>
+                    <div><label style={lbl}>Amount ($)</label><input type="number" value={nt.amount} onChange={e=>setNt({...nt,amount:e.target.value})} placeholder="0.00" min="0" step="0.01"/></div>
+                    <div style={{display:"flex",gap:10,justifyContent:"flex-end"}}><button style={GBtn} onClick={()=>setShowTF(false)}>Cancel</button><button style={PBtn} onClick={addTx}>Save</button></div>
+                  </div>
+                </div></div>)}
+              </div>
+            )}
+
+            {ftab==="Customers"&&(
+              <div>
+                <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:20,flexWrap:"wrap",gap:12}}>
+                  <div className="g3" style={{flex:1}}>{[{l:"Total Customers",v:custs.length,c:AC},{l:"Total Customer Value",v:money(custs.reduce((a,b)=>a+(Number(b.total_spent)||0),0)),c:G},{l:"Avg. Customer Value",v:custs.length?money(custs.reduce((a,b)=>a+(Number(b.total_spent)||0),0)/custs.length):money(0),c:"#f59e0b"}].map(item=>(<div key={item.l} className="sc" style={{borderTop:`3px solid ${item.c}`}}><div style={{fontSize:10,color:item.c,fontWeight:700,textTransform:"uppercase",letterSpacing:"0.06em",marginBottom:6}}>{item.l}</div><div style={{fontFamily:"'Playfair Display',Georgia,serif",fontSize:20,fontWeight:700,color:item.c}}>{item.v}</div></div>))}</div>
+                  <button style={PBtn} onClick={()=>setShowCF(true)}>+ Add Customer</button>
+                </div>
+                {custs.length===0&&<div style={{...card,textAlign:"center",padding:"40px 24px",background:"#f9fafb"}}><div style={{fontSize:14,color:"#111",marginBottom:6,fontWeight:600}}>No customers yet</div><div style={{fontSize:13,color:"#6b7280"}}>Add your first customer to build your client database</div></div>}
+                {custs.map(c=>(<div key={c.id} className="row"><div style={{display:"flex",justifyContent:"space-between",flexWrap:"wrap",gap:10}}><div style={{display:"flex",gap:14,alignItems:"flex-start",flex:1,flexWrap:"wrap"}}><div style={{width:40,height:40,borderRadius:"50%",background:"#111",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0,fontSize:15,color:"#fff",fontWeight:700,fontFamily:"'Playfair Display',Georgia,serif"}}>{c.name.charAt(0).toUpperCase()}</div><div style={{flex:1}}><div style={{fontSize:15,fontWeight:700,color:"#111",marginBottom:4}}>{c.name}</div><div style={{display:"flex",gap:16,flexWrap:"wrap",fontSize:12,color:"#6b7280"}}>{c.phone&&<span>{c.phone}</span>}{c.email&&<span>{c.email}</span>}{c.address&&<span>{c.address}</span>}</div>{c.notes&&<div style={{fontSize:12,color:"#9ca3af",marginTop:6,fontStyle:"italic"}}>{c.notes}</div>}</div></div><div style={{display:"flex",gap:12,alignItems:"center"}}><div style={{textAlign:"right"}}>{c.total_spent>0&&<div style={{fontSize:14,fontWeight:700,color:G}}>{money(c.total_spent)}</div>}{c.last_purchase&&<div style={{fontSize:11,color:"#9ca3af"}}>Last: {c.last_purchase}</div>}</div><button style={DBtn} onClick={()=>delCust(c.id)}>Remove</button></div></div></div>))}
+                {showCF&&(<div className="mo"><div className="md">
+                  <div style={{fontFamily:"'Playfair Display',Georgia,serif",fontSize:20,color:"#111",marginBottom:20,fontWeight:700}}>Add Customer</div>
+                  <div style={{display:"grid",gap:14}}>
+                    <div><label style={lbl}>Full Name</label><input value={nc.name} onChange={e=>setNc({...nc,name:e.target.value})} placeholder="Customer full name"/></div>
+                    <div className="g2"><div><label style={lbl}>Phone</label><input value={nc.phone} onChange={e=>setNc({...nc,phone:e.target.value})} placeholder="+234..."/></div><div><label style={lbl}>Email</label><input value={nc.email} onChange={e=>setNc({...nc,email:e.target.value})} placeholder="email@example.com"/></div></div>
+                    <div><label style={lbl}>Address</label><input value={nc.address} onChange={e=>setNc({...nc,address:e.target.value})} placeholder="City, area, or full address"/></div>
+                    <div className="g2"><div><label style={lbl}>Total Spent ($)</label><input type="number" value={nc.spent} onChange={e=>setNc({...nc,spent:e.target.value})} placeholder="0.00"/></div><div><label style={lbl}>Last Purchase Date</label><input type="date" value={nc.lastBuy} onChange={e=>setNc({...nc,lastBuy:e.target.value})}/></div></div>
+                    <div><label style={lbl}>Notes</label><textarea value={nc.notes} onChange={e=>setNc({...nc,notes:e.target.value})} placeholder="Preferences, allergies, important details..."/></div>
+                    <div style={{display:"flex",gap:10,justifyContent:"flex-end"}}><button style={GBtn} onClick={()=>setShowCF(false)}>Cancel</button><button style={PBtn} onClick={addCust}>Save Customer</button></div>
+                  </div>
+                </div></div>)}
+              </div>
+            )}
+
+            {ftab==="Vendors"&&(
+              <div>
+                <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:20,flexWrap:"wrap",gap:12}}>
+                  <div className="g2" style={{flex:1}}>{[{l:"Total Vendors",v:vendors.length,c:AC},{l:"Total Outstanding",v:money(vendors.reduce((a,b)=>a+(Number(b.outstanding)||0),0)),c:"#dc2626"}].map(item=>(<div key={item.l} className="sc" style={{borderTop:`3px solid ${item.c}`}}><div style={{fontSize:10,color:item.c,fontWeight:700,textTransform:"uppercase",letterSpacing:"0.06em",marginBottom:6}}>{item.l}</div><div style={{fontFamily:"'Playfair Display',Georgia,serif",fontSize:20,fontWeight:700,color:item.c}}>{item.v}</div></div>))}</div>
+                  <button style={PBtn} onClick={()=>setShowVF(true)}>+ Add Vendor</button>
+                </div>
+                {vendors.length===0&&<div style={{...card,textAlign:"center",padding:"40px 24px",background:"#f9fafb"}}><div style={{fontSize:14,color:"#111",marginBottom:6,fontWeight:600}}>No vendors yet</div><div style={{fontSize:13,color:"#6b7280"}}>Track your suppliers and what you owe them</div></div>}
+                {vendors.map(v=>(<div key={v.id} className="row"><div style={{display:"flex",justifyContent:"space-between",flexWrap:"wrap",gap:10}}><div style={{flex:1}}><div style={{fontSize:15,fontWeight:700,color:"#111",marginBottom:4}}>{v.name}</div><div style={{display:"flex",gap:14,flexWrap:"wrap",fontSize:12,color:"#6b7280",marginBottom:v.supplies?6:0}}>{v.contact&&<span>{v.contact}</span>}{v.phone&&<span>{v.phone}</span>}{v.email&&<span>{v.email}</span>}</div>{v.supplies&&<div style={{fontSize:12,color:"#374151",fontWeight:500}}>Supplies: {v.supplies}</div>}{v.payment_terms&&<div style={{fontSize:12,color:"#9ca3af",marginTop:2}}>Terms: {v.payment_terms}</div>}</div><div style={{display:"flex",gap:12,alignItems:"center"}}>{v.outstanding>0&&<div style={{textAlign:"right"}}><div style={{fontSize:11,color:"#9ca3af",marginBottom:2}}>Outstanding</div><div style={{fontSize:14,fontWeight:700,color:"#dc2626"}}>{money(v.outstanding)}</div></div>}<button style={DBtn} onClick={()=>delVendor(v.id)}>Remove</button></div></div></div>))}
+                {showVF&&(<div className="mo"><div className="md">
+                  <div style={{fontFamily:"'Playfair Display',Georgia,serif",fontSize:20,color:"#111",marginBottom:20,fontWeight:700}}>Add Vendor</div>
+                  <div style={{display:"grid",gap:14}}>
+                    <div><label style={lbl}>Business Name</label><input value={nv.name} onChange={e=>setNv({...nv,name:e.target.value})} placeholder="e.g. Lagos Beauty Wholesale"/></div>
+                    <div className="g2"><div><label style={lbl}>Contact Person</label><input value={nv.contact} onChange={e=>setNv({...nv,contact:e.target.value})} placeholder="Your contact there"/></div><div><label style={lbl}>Phone</label><input value={nv.phone} onChange={e=>setNv({...nv,phone:e.target.value})} placeholder="+234..."/></div></div>
+                    <div><label style={lbl}>Email</label><input value={nv.email} onChange={e=>setNv({...nv,email:e.target.value})} placeholder="vendor@email.com"/></div>
+                    <div><label style={lbl}>What do they supply?</label><input value={nv.supplies} onChange={e=>setNv({...nv,supplies:e.target.value})} placeholder="e.g. Hair products, packaging"/></div>
+                    <div className="g2"><div><label style={lbl}>Payment Terms</label><input value={nv.terms} onChange={e=>setNv({...nv,terms:e.target.value})} placeholder="e.g. Pay on delivery"/></div><div><label style={lbl}>Outstanding ($)</label><input type="number" value={nv.outstanding} onChange={e=>setNv({...nv,outstanding:e.target.value})} placeholder="0.00"/></div></div>
+                    <div style={{display:"flex",gap:10,justifyContent:"flex-end"}}><button style={GBtn} onClick={()=>setShowVF(false)}>Cancel</button><button style={PBtn} onClick={addVendor}>Save Vendor</button></div>
+                  </div>
+                </div></div>)}
+              </div>
+            )}
+
+            {ftab==="Calculator"&&(
+              <div className="g2" style={{alignItems:"start"}}>
+                <div style={card}>
+                  <div style={{fontFamily:"'Playfair Display',Georgia,serif",fontSize:18,fontWeight:700,color:"#111",marginBottom:6}}>Profit Margin Calculator</div>
+                  <div style={{fontSize:13,color:"#6b7280",marginBottom:20,lineHeight:1.6}}>Enter your cost and selling price to see your exact profit margin, markup, and total earnings.</div>
+                  <div style={{display:"grid",gap:16}}>
+                    <div><label style={lbl}>Cost Price — what you pay</label><input type="number" value={margin.cost} onChange={e=>setMargin({...margin,cost:e.target.value})} placeholder="0.00" min="0" step="0.01"/><div style={{fontSize:11,color:"#6b7280",marginTop:4}}>The price you paid to produce or buy the item</div></div>
+                    <div><label style={lbl}>Selling Price — what you charge</label><input type="number" value={margin.sell} onChange={e=>setMargin({...margin,sell:e.target.value})} placeholder="0.00" min="0" step="0.01"/><div style={{fontSize:11,color:"#6b7280",marginTop:4}}>The price your customer pays</div></div>
+                    <div><label style={lbl}>Quantity</label><input type="number" value={margin.qty} onChange={e=>setMargin({...margin,qty:e.target.value})} placeholder="1" min="1"/><div style={{fontSize:11,color:"#6b7280",marginTop:4}}>How many units you are selling</div></div>
+                  </div>
+                </div>
+                <div style={{display:"grid",gap:14}}>
+                  {[{l:"Profit Margin",v:mpct+"%",d:"Percentage of selling price that is profit",c:Number(mpct)>30?G:Number(mpct)>15?AC:"#dc2626"},{l:"Markup",v:mkp+"%",d:"How much above cost price you are charging",c:AC},{l:"Profit Per Unit",v:money(ppu),d:"How much you make on each item",c:ppu>=0?G:"#dc2626"},{l:"Total Profit",v:money(tpro),d:`For ${margin.qty||1} unit${Number(margin.qty||1)>1?"s":""}`,c:tpro>=0?G:"#dc2626"}].map(item=>(
+                    <div key={item.l} style={{...card,padding:18,borderTop:`3px solid ${item.c}`}}>
+                      <div style={{fontSize:10,color:item.c,fontWeight:700,textTransform:"uppercase",letterSpacing:"0.06em",marginBottom:6}}>{item.l}</div>
+                      <div style={{fontFamily:"'Playfair Display',Georgia,serif",fontSize:24,fontWeight:700,color:item.c,marginBottom:4}}>{item.v}</div>
+                      <div style={{fontSize:11,color:"#6b7280"}}>{item.d}</div>
+                    </div>
+                  ))}
+                  <div style={{...card,padding:18,background:Number(mpct)>30?"#f0fdf4":Number(mpct)>15?"#f9fafb":"#fef2f2",borderTop:`3px solid ${Number(mpct)>30?G:Number(mpct)>15?"#e5e7eb":"#dc2626"}`}}>
+                    <div style={{fontSize:13,fontWeight:700,color:"#111",marginBottom:6}}>{Number(mpct)>30?"Excellent margin":Number(mpct)>15?"Healthy margin":Number(mpct)>0?"Low margin — consider raising your price":"Enter prices above to see your analysis"}</div>
+                    <div style={{fontSize:12,color:"#374151",lineHeight:1.7}}>{Number(mpct)>30?"You are keeping more than 30% of every sale as profit. That is strong.":Number(mpct)>15?"Your margin is healthy. Most businesses aim for 20 to 40 percent.":Number(mpct)>0?"Below 15% leaves little room for business expenses. Consider raising your price.":"A healthy profit margin is typically 20 to 40 percent depending on your industry."}</div>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {ftab==="Invoice"&&(
+              <div>
+                <div style={card}>
+                  <div style={{fontFamily:"'Playfair Display',Georgia,serif",fontSize:18,fontWeight:700,color:"#111",marginBottom:20}}>Invoice Generator</div>
+                  <div className="g2" style={{marginBottom:16}}><div><label style={lbl}>Your Business Name</label><input value={profile.business_name} readOnly style={{opacity:0.6}}/></div><div><label style={lbl}>Invoice Date</label><input type="date" value={inv.date} onChange={e=>setInv({...inv,date:e.target.value})}/></div></div>
+                  <div className="g2" style={{marginBottom:16}}><div><label style={lbl}>Client Name</label><input value={inv.clientName} onChange={e=>setInv({...inv,clientName:e.target.value})} placeholder="Who are you invoicing?"/></div><div><label style={lbl}>Client Email</label><input value={inv.clientEmail} onChange={e=>setInv({...inv,clientEmail:e.target.value})} placeholder="client@email.com"/></div></div>
+                  <div style={{marginBottom:16}}><label style={lbl}>Service or Product Description</label><textarea value={inv.service} onChange={e=>setInv({...inv,service:e.target.value})} placeholder="Describe what you are charging for..."/></div>
+                  <div className="g2" style={{marginBottom:16}}><div><label style={lbl}>Amount ($)</label><input type="number" value={inv.amount} onChange={e=>setInv({...inv,amount:e.target.value})} placeholder="0.00"/></div><div><label style={lbl}>Payment Notes</label><input value={inv.notes} onChange={e=>setInv({...inv,notes:e.target.value})} placeholder="Bank details, due date, etc."/></div></div>
+                  <button style={PBtn} onClick={()=>setInvShow(true)}>Preview Invoice</button>
+                </div>
+                {invShow&&(
+                  <div style={{...card,marginTop:20,boxShadow:"0 4px 20px rgba(0,0,0,0.08)"}}>
+                    <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:32,flexWrap:"wrap",gap:12}}>
+                      <div><div style={{fontFamily:"'Playfair Display',Georgia,serif",fontSize:26,fontWeight:700,color:"#111",marginBottom:2}}>{profile.business_name}</div>{profile.tagline&&<div style={{fontSize:13,color:"#6b7280"}}>{profile.tagline}</div>}</div>
+                      <div style={{textAlign:"right"}}><div style={{fontFamily:"'Playfair Display',Georgia,serif",fontSize:20,fontWeight:700,color:"#111"}}>INVOICE</div><div style={{fontSize:12,color:"#6b7280",marginTop:4}}>Date: {inv.date||new Date().toISOString().slice(0,10)}</div><div style={{fontSize:12,color:"#6b7280"}}>No. {Math.floor(Math.random()*9000)+1000}</div></div>
+                    </div>
+                    <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:24,marginBottom:28}}><div><div style={{fontSize:10,color:"#6b7280",marginBottom:4,textTransform:"uppercase",letterSpacing:"0.06em",fontWeight:700}}>Billed To</div><div style={{fontSize:14,fontWeight:700,color:"#111"}}>{inv.clientName||"Client Name"}</div>{inv.clientEmail&&<div style={{fontSize:12,color:"#6b7280"}}>{inv.clientEmail}</div>}</div><div><div style={{fontSize:10,color:"#6b7280",marginBottom:4,textTransform:"uppercase",letterSpacing:"0.06em",fontWeight:700}}>From</div><div style={{fontSize:14,fontWeight:700,color:"#111"}}>{profile.business_name}</div></div></div>
+                    <div style={{background:"#f9fafb",borderRadius:10,padding:"16px 20px",marginBottom:20}}><div style={{display:"flex",justifyContent:"space-between",marginBottom:10}}><span style={{fontSize:11,color:"#6b7280",textTransform:"uppercase",letterSpacing:"0.06em",fontWeight:700}}>Description</span><span style={{fontSize:11,color:"#6b7280",textTransform:"uppercase",letterSpacing:"0.06em",fontWeight:700}}>Amount</span></div><div style={{display:"flex",justifyContent:"space-between",padding:"10px 0",borderTop:"1px solid #e5e7eb"}}><span style={{fontSize:14,color:"#111",fontWeight:500}}>{inv.service||"Service description"}</span><span style={{fontSize:14,fontWeight:700,color:"#111"}}>{money(inv.amount||0)}</span></div></div>
+                    <div style={{display:"flex",justifyContent:"flex-end",marginBottom:20}}><div style={{background:"#111",color:"#fff",borderRadius:10,padding:"12px 24px"}}><div style={{fontSize:11,marginBottom:2,opacity:0.7,fontWeight:600}}>Total Due</div><div style={{fontFamily:"'Playfair Display',Georgia,serif",fontSize:22,fontWeight:700}}>{money(inv.amount||0)}</div></div></div>
+                    {inv.notes&&<div style={{borderTop:"1px solid #e5e7eb",paddingTop:16,fontSize:13,color:"#374151",fontWeight:500}}><span style={{fontWeight:700,color:"#111"}}>Payment notes: </span>{inv.notes}</div>}
+                    <div style={{display:"flex",gap:10,marginTop:20}}><button style={PBtn} onClick={()=>window.print()}>Print Invoice</button><button style={GBtn} onClick={()=>setInvShow(false)}>Close</button></div>
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* GUIDE */}
+        {tab==="Guide"&&(
+          <div>
+            <div style={ST}>How to Use BizKit Pro</div>
+            <div style={SS}>A plain-English guide to every section — no jargon, no overwhelm</div>
             {[
-              {
-                title:"🏠 Home Dashboard",
-                content:`The Home tab is your command centre. At a glance, you'll see your total income, total expenses, net profit, and how many content posts you have in your pipeline.\n\nThe Content Pipeline shows how your posts are distributed across different stages — from Idea to Posted. Use this to make sure you always have content ready to go.\n\nYour Content Pillars section shows the 5 types of content that work best for ${niche.label} businesses. Try to rotate through all of them each week so your audience gets variety.`
-              },
-              {
-                title:"📅 Content Planner",
-                content:`This is where you plan everything you post on social media — before you post it. Planning ahead means you're never scrambling for ideas at the last minute.\n\n**Ideas Bank**: We've pre-loaded this with ${niche.contentIdeas.length} content ideas written specifically for ${niche.label} businesses. Tap any idea to instantly add it to your planner.\n\n**Caption Starters**: These are fill-in-the-blank captions designed for your niche. Replace the [brackets] with your own details.\n\n**Status tracking**: Move posts from Idea → In Progress → Scheduled → Posted as you work through them. This helps you see exactly where everything is.\n\n**Filters**: Use the month filter to view only what's planned for a specific period, and the status filter to focus on what needs attention.`
-              },
-              {
-                title:"💰 Finance Tracker",
-                content:`Track every rand, dollar, or pound that moves through your business. This isn't accounting software — it's a simple, visual record of what's coming in and going out.\n\n**Adding income**: Every time you make a sale, get paid by a client, or receive money for your business, log it here. Choose the right category so you can see which income streams are performing best.\n\n**Adding expenses**: Log everything you spend — even small things like subscriptions or supplies. These add up fast.\n\n**Net Profit**: This is the number that actually matters. Income minus expenses = what your business actually made. Check this weekly.\n\n**Category breakdowns**: At the bottom, you'll see your income and expenses broken down by category. This tells you where your money is really coming from and going to.`
-              },
-              {
-                title:"🎨 Brand Hub",
-                content:`A clear brand makes your content consistent, recognisable, and trustworthy. This section helps you define yours.\n\n**Business Identity**: Your name, tagline, voice, and colours. Fill this in so you have a reference point every time you create content.\n\n**Target Audience**: Be specific. Don't write "everyone". Write "small business owners aged 28–45 who are overwhelmed by social media and want practical help."\n\n**Mission Statement**: Why does your business exist? What problem do you solve? What change do you create for your customers?\n\n**Content Pillars**: These are the 5 themes your content rotates around. Every post you create should fall into one of these pillars — this keeps your page focused and purposeful.`
-              },
-              {
-                title:"💡 Tips for Success",
-                content:`→ **Consistency beats perfection.** Post something imperfect consistently rather than waiting for perfect content that never ships.\n\n→ **Use the Ideas Bank.** Those content ideas were written specifically for ${niche.label} businesses. You don't need to reinvent the wheel — just add your voice.\n\n→ **Log every transaction.** Even the small ones. Over time, the data will show you exactly where to focus your energy.\n\n→ **Review weekly.** Spend 10 minutes every Monday reviewing your content pipeline and your finances. That's it. That's the habit.\n\n→ **Your brand hub is a living document.** Update it as your business evolves. The clearer your brand, the easier content creation becomes.`
-              },
+              {title:"Your Account",content:`BizKit Pro uses a secure account system. All your data — posts, transactions, customers, vendors, analytics, and checklist — is saved to the cloud.\n\nYou can log in from any device and all your data will be there. Nothing is lost if you close the tab or switch devices.\n\nTo sign out, click the Sign out button in the top right corner.`},
+              {title:"Home Dashboard",content:`Your command centre. At a glance you see total income, expenses, profit, and your content pipeline.\n\nThe brand card at the top shows your business name and tagline. If you have set a monthly goal in Brand Hub, you will see a live progress bar tracking how close you are.\n\nUse the quick action buttons at the bottom to jump into adding content, logging a transaction, or opening the profit calculator.`},
+              {title:"Brand Hub",content:`Define who you are and what your business stands for.\n\n**Business Identity** shows your name, tagline, niche, audience, and brand colour. Your brand colour themes the entire app.\n\n**Monthly Goal** lets you set an income target with a live progress bar across the app.\n\n**Setup Checklist** has pre-loaded tasks for your specific niche. Tick them off as you go, and add your own custom items at the bottom.\n\n**Support** — the email support button connects you directly to our team.`},
+              {title:"Content Planner",content:`Plan every post before it goes live.\n\n**Content Ideas** are written specifically for your niche. Click any idea to instantly pre-fill a new post.\n\n**Caption Starters** are fill-in-the-blank captions. Replace the brackets with your own details.\n\n**Status tracking** — move posts from Idea to In Progress to Scheduled to Posted.\n\n**Log Analytics** — after posting, paste in your stats from Instagram, TikTok, or LinkedIn. The app shows you exactly where to find your numbers. Over time you will see which content your audience responds to most.`},
+              {title:"Finance — Overview and Transactions",content:`**Overview** shows your total income, expenses, and net profit broken down by category.\n\n**Transactions** is where you log every payment in and out. Categories are tailored to your specific niche.\n\nLog every transaction, even the small ones. After three months the data will show you things about your business you would not have noticed otherwise.`},
+              {title:"Finance — Customers and Vendors",content:`**Customers** — build your full client database with name, phone, email, address, notes, total spending, and last purchase date. The summary cards show your total customers, total value, and average value per customer.\n\n**Vendors** — track your suppliers with contact details, what they supply, payment terms, and outstanding balance. This keeps you on top of what you owe.`},
+              {title:"Finance — Calculator and Invoice",content:`**Profit Margin Calculator** — enter your cost price and selling price to instantly see your profit margin percentage, markup, profit per unit, and total profit. The colour-coded result tells you if your margin is excellent, healthy, or too low.\n\nUse this before setting any price. Most small businesses underprice and wonder why they struggle.\n\n**Invoice Generator** — fill in client details, service description, and amount to get a clean, professional, printable invoice with your business name. Print it to send to your client.`},
+              {title:"Tips for Success",content:`Log every transaction even the small ones. After three months the data tells you things you would not have noticed otherwise.\n\nUse the profit calculator before you quote any client. Know your numbers first.\n\nPost consistently rather than perfectly. An imperfect post published today beats a perfect one that never goes out.\n\nAdd your customers. Businesses that grow fastest know their customers by name.\n\nLog analytics after every post. After a few weeks you will know exactly what content your audience responds to.\n\nReview your numbers every Monday morning for ten minutes. Check your pipeline, your finances, and your goal. That is all it takes.`},
             ].map(section=>(
-              <div key={section.title} className="guide-section">
-                <div style={{ fontFamily:"'Fraunces',Georgia,serif", fontSize:18, color:"#f5f0e8", marginBottom:12 }}>{section.title}</div>
-                {section.content.split("\n\n").map((para, i)=>(
-                  <p key={i} style={{ fontSize:14, color:"#9ca3af", lineHeight:1.75, marginBottom:10, fontWeight:300 }}>
-                    {para.split(/\*\*(.*?)\*\*/g).map((chunk, j) =>
-                      j%2===1 ? <strong key={j} style={{ color:"#d1d5db", fontWeight:600 }}>{chunk}</strong> : chunk
-                    )}
+              <div key={section.title} className="gsec">
+                <div style={{fontFamily:"'Playfair Display',Georgia,serif",fontSize:17,color:"#111",marginBottom:12,fontWeight:700}}>{section.title}</div>
+                {section.content.split("\n\n").map((para,i)=>(
+                  <p key={i} style={{fontSize:14,color:"#374151",lineHeight:1.8,marginBottom:10}}>
+                    {para.split(/\*\*(.*?)\*\*/g).map((chunk,j)=>j%2===1?<strong key={j} style={{color:"#111",fontWeight:700}}>{chunk}</strong>:chunk)}
                   </p>
                 ))}
               </div>
