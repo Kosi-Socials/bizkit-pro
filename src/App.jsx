@@ -1,6 +1,5 @@
-import { useState, useEffect } from "react";
-import { createClient } from "@supabase/supabase-js";
-
+const SURL = process.env.REACT_APP_SUPABASE_URL;
+const SKEY = process.env.REACT_APP_SUPABASE_ANON_KEY;
 const SURL = "https://quyvmsqdfzuetzwzhase.supabase.co";
 const SKEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InF1eXZtc3FkZnp1ZXR6d3poYXNlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU4NTQ1NjUsImV4cCI6MjA5MTQzMDU2NX0.yBg9rXcBxBL2xnOnM_6YTtkpy3BcFZdP3dmYrU-3qvk";
 const sb = createClient(SURL, SKEY);
