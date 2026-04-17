@@ -1,9 +1,18 @@
-const SURL = process.env.REACT_APP_SUPABASE_URL;
-const SKEY = process.env.REACT_APP_SUPABASE_ANON_KEY;
+import { useState, useEffect } from "react";
+import { createClient } from "@supabase/supabase-js";
+
 const SURL = "https://quyvmsqdfzuetzwzhase.supabase.co";
 const SKEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InF1eXZtc3FkZnp1ZXR6d3poYXNlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU4NTQ1NjUsImV4cCI6MjA5MTQzMDU2NX0.yBg9rXcBxBL2xnOnM_6YTtkpy3BcFZdP3dmYrU-3qvk";
 const sb = createClient(SURL, SKEY);
 const G = "#16a34a";
+
+const CURRENCIES = [
+  { code:"USD", symbol:"$",   label:"US Dollar" },
+  { code:"NGN", symbol:"\u20a6",   label:"Nigerian Naira" },
+  { code:"GBP", symbol:"\u00a3",   label:"British Pounds" },
+  { code:"CAD", symbol:"CA$", label:"Canadian Dollar" },
+];
+
 
 const NICHES = [
   { id:"beauty", label:"Beauty & Wellness", accent:"#c4a882",
@@ -79,7 +88,7 @@ const TABS=["Home","Brand","Content","Finance","Guide"];
 const FTABS=["Overview","Transactions","Customers","Vendors","Calculator","Invoice"];
 
 function uid(){return Math.random().toString(36).slice(2);}
-function money(n){return "$"+Number(n||0).toLocaleString("en-US",{minimumFractionDigits:2,maximumFractionDigits:2});}
+// money defined inside App using currency state
 function pct(a,b){return b===0?0:Math.min(Math.round((a/b)*100),100);}
 
 function Auth({onAuth}){
@@ -97,7 +106,7 @@ function Auth({onAuth}){
     }catch(e){setErr(e.message);}
     setBusy(false);
   }
-  async function reset(){if(!email){setErr("Enter your email first.");return;}setBusy(true);const{error:e}=await sb.auth.resetPasswordForEmail(email);if(e)setErr(e.message);else setMsg("Password reset email sent.");setBusy(false);}
+  async function reset(){if(!email){setErr("Enter your email first.");return;}setBusy(true);const{error:e}=await sb.auth.resetPasswordForEmail(email,{redirectTo:window.location.origin});if(e)setErr(e.message);else setMsg("Password reset email sent.");setBusy(false);}
   const fi={background:"#f9fafb",border:"1px solid #e5e7eb",color:"#111",borderRadius:10,padding:"11px 14px",fontFamily:"'DM Sans',sans-serif",fontSize:14,width:"100%",outline:"none"};
   return(
     <div style={{minHeight:"100vh",display:"flex",alignItems:"center",justifyContent:"center",background:"#f9fafb",padding:24,fontFamily:"'DM Sans',sans-serif"}}>
@@ -194,12 +203,16 @@ export default function App(){
   const [ideaF,setIdeaF]=useState("All");
   const [margin,setMargin]=useState({cost:"",sell:"",qty:1});
   const [inv,setInv]=useState({clientName:"",clientEmail:"",service:"",amount:"",date:"",notes:""});
+  const [currency,setCurrency]=useState(CURRENCIES[0]);
+  const money=(n)=>currency.symbol+Number(n||0).toLocaleString("en-US",{minimumFractionDigits:2,maximumFractionDigits:2});
   const [invShow,setInvShow]=useState(false);
   const [showPF,setShowPF]=useState(false);
   const [showTF,setShowTF]=useState(false);
   const [showCF,setShowCF]=useState(false);
   const [showVF,setShowVF]=useState(false);
   const [showAF,setShowAF]=useState(false);
+  const [editCust,setEditCust]=useState(null);
+  const [editVendor,setEditVendor]=useState(null);
   const [np,setNp]=useState({date:"",platform:"Instagram",type:"Reel",caption:"",hashtags:"",status:"Idea",notes:""});
   const [nt,setNt]=useState({date:"",type:"Income",category:"",description:"",amount:""});
   const [nc,setNc]=useState({name:"",phone:"",email:"",address:"",notes:"",spent:"",lastBuy:""});
@@ -235,8 +248,10 @@ export default function App(){
   async function delTx(id){await sb.from("transactions").delete().eq("id",id);setTxs(txs.filter(t=>t.id!==id));}
   async function addCust(){if(!nc.name)return;const{data}=await sb.from("customers").insert({name:nc.name,phone:nc.phone,email:nc.email,address:nc.address,notes:nc.notes,total_spent:Number(nc.spent)||0,last_purchase:nc.lastBuy,user_id:user.id}).select().single();if(data)setCusts([data,...custs]);setNc({name:"",phone:"",email:"",address:"",notes:"",spent:"",lastBuy:""});setShowCF(false);}
   async function delCust(id){await sb.from("customers").delete().eq("id",id);setCusts(custs.filter(c=>c.id!==id));}
+  async function saveCustEdit(){if(!editCust)return;await sb.from("customers").update({name:editCust.name,phone:editCust.phone,email:editCust.email,address:editCust.address,notes:editCust.notes,total_spent:Number(editCust.total_spent)||0,last_purchase:editCust.last_purchase}).eq("id",editCust.id);setCusts(custs.map(c=>c.id===editCust.id?editCust:c));setEditCust(null);}
   async function addVendor(){if(!nv.name)return;const{data}=await sb.from("vendors").insert({name:nv.name,contact:nv.contact,phone:nv.phone,email:nv.email,supplies:nv.supplies,payment_terms:nv.terms,outstanding:Number(nv.outstanding)||0,user_id:user.id}).select().single();if(data)setVendors([data,...vendors]);setNv({name:"",contact:"",phone:"",email:"",supplies:"",terms:"",outstanding:""});setShowVF(false);}
   async function delVendor(id){await sb.from("vendors").delete().eq("id",id);setVendors(vendors.filter(v=>v.id!==id));}
+  async function saveVendorEdit(){if(!editVendor)return;await sb.from("vendors").update({name:editVendor.name,contact:editVendor.contact,phone:editVendor.phone,email:editVendor.email,supplies:editVendor.supplies,payment_terms:editVendor.payment_terms,outstanding:Number(editVendor.outstanding)||0}).eq("id",editVendor.id);setVendors(vendors.map(v=>v.id===editVendor.id?editVendor:v));setEditVendor(null);}
   async function addAnalytic(){if(!na.caption)return;const{data}=await sb.from("analytics").insert({...na,views:Number(na.views)||0,reach:Number(na.reach)||0,saves:Number(na.saves)||0,shares:Number(na.shares)||0,comments:Number(na.comments)||0,likes:Number(na.likes)||0,user_id:user.id}).select().single();if(data)setAnalytics([data,...analytics]);setNa({date:"",platform:"Instagram",caption:"",views:"",reach:"",saves:"",shares:"",comments:"",likes:""});setShowAF(false);}
   async function delAnalytic(id){await sb.from("analytics").delete().eq("id",id);setAnalytics(analytics.filter(a=>a.id!==id));}
 
@@ -276,6 +291,7 @@ export default function App(){
   const PBtn={padding:"10px 20px",borderRadius:10,border:"none",cursor:"pointer",fontFamily:"'DM Sans',sans-serif",fontWeight:700,fontSize:14,background:"#111",color:"#fff"};
   const GBtn={padding:"9px 16px",borderRadius:10,border:"1px solid #e5e7eb",background:"#fff",color:"#374151",cursor:"pointer",fontFamily:"'DM Sans',sans-serif",fontWeight:600,fontSize:13};
   const DBtn={padding:"5px 10px",borderRadius:7,border:"1px solid #fecaca",background:"#fef2f2",color:"#dc2626",cursor:"pointer",fontFamily:"'DM Sans',sans-serif",fontSize:11,fontWeight:600};
+  const EBtn={padding:"5px 10px",borderRadius:7,border:"1px solid #e5e7eb",background:"#f9fafb",color:"#374151",cursor:"pointer",fontFamily:"'DM Sans',sans-serif",fontSize:11,fontWeight:600};
   const ST={fontFamily:"'Playfair Display',Georgia,serif",fontSize:24,fontWeight:700,color:"#111",marginBottom:4};
   const SS={fontSize:13,color:"#6b7280",marginBottom:24};
 
@@ -316,7 +332,8 @@ export default function App(){
             <div style={{width:1,height:14,background:"#e5e7eb"}}/>
             <span style={{fontSize:13,fontWeight:600,color:"#374151"}}>{profile.business_name}</span>
           </div>
-          <button onClick={signOut} style={{background:"none",border:"1px solid #e5e7eb",borderRadius:8,padding:"5px 12px",cursor:"pointer",fontSize:12,color:"#6b7280",fontFamily:"'DM Sans',sans-serif",fontWeight:500}}>Sign out</button>
+          <select value={currency.code} onChange={e=>setCurrency(CURRENCIES.find(c=>c.code===e.target.value))} style={{width:"auto",fontSize:12,padding:"5px 10px",borderRadius:8,fontWeight:600,color:"#374151",border:"1px solid #e5e7eb",background:"#fff",cursor:"pointer",fontFamily:"'DM Sans',sans-serif"}}>{CURRENCIES.map(c=><option key={c.code} value={c.code}>{c.symbol} {c.code}</option>)}</select>
+            <button onClick={signOut} style={{background:"none",border:"1px solid #e5e7eb",borderRadius:8,padding:"5px 12px",cursor:"pointer",fontSize:12,color:"#6b7280",fontFamily:"'DM Sans',sans-serif",fontWeight:500}}>Sign out</button>
         </div>
         <div style={{maxWidth:1000,margin:"0 auto",display:"flex",overflowX:"auto",gap:0}}>
           {TABS.map(t=><button key={t} className="nb" onClick={()=>setTab(t)} style={{fontWeight:tab===t?700:400,color:tab===t?"#111":"#6b7280",borderBottom:tab===t?"2px solid #111":"2px solid transparent"}}>{t}</button>)}
@@ -566,7 +583,8 @@ export default function App(){
                   <button style={PBtn} onClick={()=>setShowCF(true)}>+ Add Customer</button>
                 </div>
                 {custs.length===0&&<div style={{...card,textAlign:"center",padding:"40px 24px",background:"#f9fafb"}}><div style={{fontSize:14,color:"#111",marginBottom:6,fontWeight:600}}>No customers yet</div><div style={{fontSize:13,color:"#6b7280"}}>Add your first customer to build your client database</div></div>}
-                {custs.map(c=>(<div key={c.id} className="row"><div style={{display:"flex",justifyContent:"space-between",flexWrap:"wrap",gap:10}}><div style={{display:"flex",gap:14,alignItems:"flex-start",flex:1,flexWrap:"wrap"}}><div style={{width:40,height:40,borderRadius:"50%",background:"#111",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0,fontSize:15,color:"#fff",fontWeight:700,fontFamily:"'Playfair Display',Georgia,serif"}}>{c.name.charAt(0).toUpperCase()}</div><div style={{flex:1}}><div style={{fontSize:15,fontWeight:700,color:"#111",marginBottom:4}}>{c.name}</div><div style={{display:"flex",gap:16,flexWrap:"wrap",fontSize:12,color:"#6b7280"}}>{c.phone&&<span>{c.phone}</span>}{c.email&&<span>{c.email}</span>}{c.address&&<span>{c.address}</span>}</div>{c.notes&&<div style={{fontSize:12,color:"#9ca3af",marginTop:6,fontStyle:"italic"}}>{c.notes}</div>}</div></div><div style={{display:"flex",gap:12,alignItems:"center"}}><div style={{textAlign:"right"}}>{c.total_spent>0&&<div style={{fontSize:14,fontWeight:700,color:G}}>{money(c.total_spent)}</div>}{c.last_purchase&&<div style={{fontSize:11,color:"#9ca3af"}}>Last: {c.last_purchase}</div>}</div><button style={DBtn} onClick={()=>delCust(c.id)}>Remove</button></div></div></div>))}
+                {custs.map(c=>(<div key={c.id} className="row"><div style={{display:"flex",justifyContent:"space-between",flexWrap:"wrap",gap:10}}><div style={{display:"flex",gap:14,alignItems:"flex-start",flex:1,flexWrap:"wrap"}}><div style={{width:40,height:40,borderRadius:"50%",background:"#111",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0,fontSize:15,color:"#fff",fontWeight:700,fontFamily:"'Playfair Display',Georgia,serif"}}>{c.name.charAt(0).toUpperCase()}</div><div style={{flex:1}}><div style={{fontSize:15,fontWeight:700,color:"#111",marginBottom:4}}>{c.name}</div><div style={{display:"flex",gap:16,flexWrap:"wrap",fontSize:12,color:"#6b7280"}}>{c.phone&&<span>{c.phone}</span>}{c.email&&<span>{c.email}</span>}{c.address&&<span>{c.address}</span>}</div>{c.notes&&<div style={{fontSize:12,color:"#9ca3af",marginTop:6,fontStyle:"italic"}}>{c.notes}</div>}</div></div><div style={{display:"flex",gap:12,alignItems:"center"}}><div style={{textAlign:"right"}}>{c.total_spent>0&&<div style={{fontSize:14,fontWeight:700,color:G}}>{money(c.total_spent)}</div>}{c.last_purchase&&<div style={{fontSize:11,color:"#9ca3af"}}>Last: {c.last_purchase}</div>}</div><button style={EBtn} onClick={()=>setEditCust({...c})}>Edit</button>
+                  <button style={DBtn} onClick={()=>delCust(c.id)}>Remove</button></div></div></div>))}
                 {showCF&&(<div className="mo"><div className="md">
                   <div style={{fontFamily:"'Playfair Display',Georgia,serif",fontSize:20,color:"#111",marginBottom:20,fontWeight:700}}>Add Customer</div>
                   <div style={{display:"grid",gap:14}}>
@@ -578,6 +596,17 @@ export default function App(){
                     <div style={{display:"flex",gap:10,justifyContent:"flex-end"}}><button style={GBtn} onClick={()=>setShowCF(false)}>Cancel</button><button style={PBtn} onClick={addCust}>Save Customer</button></div>
                   </div>
                 </div></div>)}
+            {editCust&&(<div className="mo"><div className="md">
+              <div style={{fontFamily:"'Playfair Display',Georgia,serif",fontSize:20,color:"#111",marginBottom:20,fontWeight:700}}>Edit Customer</div>
+              <div style={{display:"grid",gap:14}}>
+                <div><label style={lbl}>Full Name</label><input value={editCust.name} onChange={e=>setEditCust({...editCust,name:e.target.value})}/></div>
+                <div className="g2"><div><label style={lbl}>Phone</label><input value={editCust.phone||""} onChange={e=>setEditCust({...editCust,phone:e.target.value})} placeholder="+234..."/></div><div><label style={lbl}>Email</label><input value={editCust.email||""} onChange={e=>setEditCust({...editCust,email:e.target.value})} placeholder="email@example.com"/></div></div>
+                <div><label style={lbl}>Address</label><input value={editCust.address||""} onChange={e=>setEditCust({...editCust,address:e.target.value})} placeholder="City, area, or full address"/></div>
+                <div className="g2"><div><label style={lbl}>Total Spent</label><input type="number" value={editCust.total_spent||""} onChange={e=>setEditCust({...editCust,total_spent:e.target.value})} placeholder="0.00"/></div><div><label style={lbl}>Last Purchase Date</label><input type="date" value={editCust.last_purchase||""} onChange={e=>setEditCust({...editCust,last_purchase:e.target.value})}/></div></div>
+                <div><label style={lbl}>Notes</label><textarea value={editCust.notes||""} onChange={e=>setEditCust({...editCust,notes:e.target.value})} placeholder="Preferences, allergies, important details..."/></div>
+                <div style={{display:"flex",gap:10,justifyContent:"flex-end"}}><button style={GBtn} onClick={()=>setEditCust(null)}>Cancel</button><button style={PBtn} onClick={saveCustEdit}>Save Changes</button></div>
+              </div>
+            </div></div>)}
               </div>
             )}
 
@@ -588,7 +617,8 @@ export default function App(){
                   <button style={PBtn} onClick={()=>setShowVF(true)}>+ Add Vendor</button>
                 </div>
                 {vendors.length===0&&<div style={{...card,textAlign:"center",padding:"40px 24px",background:"#f9fafb"}}><div style={{fontSize:14,color:"#111",marginBottom:6,fontWeight:600}}>No vendors yet</div><div style={{fontSize:13,color:"#6b7280"}}>Track your suppliers and what you owe them</div></div>}
-                {vendors.map(v=>(<div key={v.id} className="row"><div style={{display:"flex",justifyContent:"space-between",flexWrap:"wrap",gap:10}}><div style={{flex:1}}><div style={{fontSize:15,fontWeight:700,color:"#111",marginBottom:4}}>{v.name}</div><div style={{display:"flex",gap:14,flexWrap:"wrap",fontSize:12,color:"#6b7280",marginBottom:v.supplies?6:0}}>{v.contact&&<span>{v.contact}</span>}{v.phone&&<span>{v.phone}</span>}{v.email&&<span>{v.email}</span>}</div>{v.supplies&&<div style={{fontSize:12,color:"#374151",fontWeight:500}}>Supplies: {v.supplies}</div>}{v.payment_terms&&<div style={{fontSize:12,color:"#9ca3af",marginTop:2}}>Terms: {v.payment_terms}</div>}</div><div style={{display:"flex",gap:12,alignItems:"center"}}>{v.outstanding>0&&<div style={{textAlign:"right"}}><div style={{fontSize:11,color:"#9ca3af",marginBottom:2}}>Outstanding</div><div style={{fontSize:14,fontWeight:700,color:"#dc2626"}}>{money(v.outstanding)}</div></div>}<button style={DBtn} onClick={()=>delVendor(v.id)}>Remove</button></div></div></div>))}
+                {vendors.map(v=>(<div key={v.id} className="row"><div style={{display:"flex",justifyContent:"space-between",flexWrap:"wrap",gap:10}}><div style={{flex:1}}><div style={{fontSize:15,fontWeight:700,color:"#111",marginBottom:4}}>{v.name}</div><div style={{display:"flex",gap:14,flexWrap:"wrap",fontSize:12,color:"#6b7280",marginBottom:v.supplies?6:0}}>{v.contact&&<span>{v.contact}</span>}{v.phone&&<span>{v.phone}</span>}{v.email&&<span>{v.email}</span>}</div>{v.supplies&&<div style={{fontSize:12,color:"#374151",fontWeight:500}}>Supplies: {v.supplies}</div>}{v.payment_terms&&<div style={{fontSize:12,color:"#9ca3af",marginTop:2}}>Terms: {v.payment_terms}</div>}</div><div style={{display:"flex",gap:12,alignItems:"center"}}>{v.outstanding>0&&<div style={{textAlign:"right"}}><div style={{fontSize:11,color:"#9ca3af",marginBottom:2}}>Outstanding</div><div style={{fontSize:14,fontWeight:700,color:"#dc2626"}}>{money(v.outstanding)}</div></div>}<button style={EBtn} onClick={()=>setEditVendor({...v})}>Edit</button>
+                  <button style={DBtn} onClick={()=>delVendor(v.id)}>Remove</button></div></div></div>))}
                 {showVF&&(<div className="mo"><div className="md">
                   <div style={{fontFamily:"'Playfair Display',Georgia,serif",fontSize:20,color:"#111",marginBottom:20,fontWeight:700}}>Add Vendor</div>
                   <div style={{display:"grid",gap:14}}>
@@ -600,6 +630,17 @@ export default function App(){
                     <div style={{display:"flex",gap:10,justifyContent:"flex-end"}}><button style={GBtn} onClick={()=>setShowVF(false)}>Cancel</button><button style={PBtn} onClick={addVendor}>Save Vendor</button></div>
                   </div>
                 </div></div>)}
+            {editVendor&&(<div className="mo"><div className="md">
+              <div style={{fontFamily:"'Playfair Display',Georgia,serif",fontSize:20,color:"#111",marginBottom:20,fontWeight:700}}>Edit Vendor</div>
+              <div style={{display:"grid",gap:14}}>
+                <div><label style={lbl}>Business Name</label><input value={editVendor.name} onChange={e=>setEditVendor({...editVendor,name:e.target.value})}/></div>
+                <div className="g2"><div><label style={lbl}>Contact Person</label><input value={editVendor.contact||""} onChange={e=>setEditVendor({...editVendor,contact:e.target.value})} placeholder="Your contact there"/></div><div><label style={lbl}>Phone</label><input value={editVendor.phone||""} onChange={e=>setEditVendor({...editVendor,phone:e.target.value})} placeholder="+234..."/></div></div>
+                <div><label style={lbl}>Email</label><input value={editVendor.email||""} onChange={e=>setEditVendor({...editVendor,email:e.target.value})} placeholder="vendor@email.com"/></div>
+                <div><label style={lbl}>What do they supply?</label><input value={editVendor.supplies||""} onChange={e=>setEditVendor({...editVendor,supplies:e.target.value})} placeholder="e.g. Hair products, packaging"/></div>
+                <div className="g2"><div><label style={lbl}>Payment Terms</label><input value={editVendor.payment_terms||""} onChange={e=>setEditVendor({...editVendor,payment_terms:e.target.value})} placeholder="e.g. Pay on delivery"/></div><div><label style={lbl}>Outstanding</label><input type="number" value={editVendor.outstanding||""} onChange={e=>setEditVendor({...editVendor,outstanding:e.target.value})} placeholder="0.00"/></div></div>
+                <div style={{display:"flex",gap:10,justifyContent:"flex-end"}}><button style={GBtn} onClick={()=>setEditVendor(null)}>Cancel</button><button style={PBtn} onClick={saveVendorEdit}>Save Changes</button></div>
+              </div>
+            </div></div>)}
               </div>
             )}
 
